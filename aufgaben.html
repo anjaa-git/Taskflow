@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aufgaben entdecken | taskflow</title>
+
+    <!-- Leaflet: Bibliothek für die interaktive Karte -->
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+    <style>
+        /* =========================
+           1. ZENTRALES DESIGNSYSTEM
+           ========================= */
+
+        :root {
+            --cream: #F6EFE5;
+            --white: #FFFCF6;
+            --brown: #583A2B;
+            --dark: #2A201B;
+            --rust: #B95F3C;
+            --copper: #D98C64;
+            --muted: #88776B;
+            --border: rgba(88, 58, 43, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Inter, Arial, sans-serif;
+            background: var(--cream);
+            color: var(--dark);
+        }
+
+        button, input, select {
+            font: inherit;
+        }
+
+        button, a {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        /* =========================
+           2. KOPFZEILE
+           ========================= */
+
+        .topbar {
+            height: 76px;
+            position: fixed;
+            inset: 0 0 auto 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            padding: 0 30px;
+            background: rgba(255, 252, 246, 0.92);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            flex-shrink: 0;
+            color: var(--brown);
+        }
+
+        .brand-icon {
+            width: 43px;
+            height: 43px;
+            transition: transform 0.3s ease;
+        }
+
+        .brand:hover .brand-icon {
+            transform: rotate(-5deg) scale(1.06);
+        }
+
+        .brand-name {
+            max-width: 0;
+            overflow: hidden;
+            white-space: nowrap;
+            font-size: 21px;
+            font-weight: 800;
+            opacity: 0;
+            transition: max-width 0.35s ease,
+                        opacity 0.25s ease,
+                        margin 0.35s ease;
+        }
+
+        .brand:hover .brand-name {
+            max-width: 120px;
+            margin-left: 9px;
+            opacity: 1;
+        }
+
+        .global-search {
+            flex: 1;
+            max-width: 530px;
+            position: relative;
+            margin-left: auto;
+        }
+
+        .global-search input {
+            width: 100%;
+            padding: 12px 16px 12px 43px;
+            background: var(--cream);
+            border: 1px solid transparent;
+            border-radius: 14px;
+            outline: none;
+        }
+
+        .global-search input:focus {
+            border-color: var(--copper);
+            box-shadow: 0 0 0 3px rgba(217, 140, 100, 0.13);
+        }
+
+        .search-symbol {
+            position: absolute;
+            left: 15px;
+            top: 11px;
+            color: var(--muted);
+        }
+
+        .top-action {
+            border: 0;
+            background: transparent;
+            color: var(--brown);
+            padding: 10px;
+            border-radius: 10px;
+            transition: background 0.2s ease;
+        }
+
+        .top-action:hover {
+            background: #F0E2D3;
+        }
+
+        .sign-in {
+            background: var(--brown);
+            color: white;
+            padding: 11px 19px;
+            border-radius: 12px;
+        }
+
+        .sign-in:hover {
+            background: var(--rust);
+        }
+
+        /* =========================
+           3. LINKE NAVIGATION
+           ========================= */
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 76px;
+            bottom: 0;
+            width: 238px;
+            padding: 25px 15px;
+            background: rgba(255, 252, 246, 0.82);
+            border-right: 1px solid var(--border);
+            z-index: 900;
+        }
+
+        .nav-label {
+            margin: 4px 12px 17px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            padding: 13px 14px;
+            margin-bottom: 5px;
+            border-radius: 12px;
+            color: var(--muted);
+            font-size: 14px;
+            transition: background 0.22s ease,
+                        color 0.22s ease,
+                        transform 0.22s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--brown);
+            background: #F2E6D9;
+            transform: translateX(3px);
+        }
+
+        .nav-link.active {
+            background: #EBD9C8;
+            color: var(--brown);
+            font-weight: 700;
+            box-shadow: inset 3px 0 var(--rust);
+        }
+
+        .nav-icon {
+            width: 21px;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        /* =========================
+           4. HAUPTBEREICH
+           ========================= */
+
+        main {
+            margin-left: 238px;
+            padding: 105px 32px 40px;
+            max-width: 1700px;
+        }
+
+        .page-heading {
+            margin-bottom: 24px;
+        }
+
+        .eyebrow {
+            color: var(--rust);
+            text-transform: uppercase;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 1.8px;
+        }
+
+        h1 {
+            font-size: clamp(27px, 3vw, 38px);
+            letter-spacing: -1.2px;
+            margin: 8px 0;
+            color: var(--brown);
+        }
+
+        .subtitle {
+            color: var(--muted);
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        /* =========================
+           5. SUCHFELD UND FILTER
+           ========================= */
+
+        .filter-panel {
+            display: grid;
+            grid-template-columns: minmax(180px, 2fr)
+                                   minmax(145px, 1fr)
+                                   minmax(125px, 1fr)
+                                   minmax(125px, 1fr);
+            gap: 12px;
+            background: var(--white);
+            border: 1px solid var(--border);
+            padding: 17px;
+            border-radius: 18px;
+            box-shadow: 0 5px 20px rgba(88, 58, 43, 0.04);
+            margin-bottom: 17px;
+        }
+
+        .field {
+            min-width: 0;
+        }
+
+        .field label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .field input,
+        .field select {
+            width: 100%;
+            min-width: 0;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: #FFFEFA;
+            color: var(--dark);
+            outline: none;
+        }
+
+        .field input:focus,
+        .field select:focus {
+            border-color: var(--copper);
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 20px 0 16px;
+        }
+
+        .result-count {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .result-count strong {
+            color: var(--brown);
+        }
+
+        .view-switch {
+            display: flex;
+            gap: 4px;
+            padding: 4px;
+            background: #EDE1D5;
+            border-radius: 12px;
+        }
+
+        .view-button {
+            border: 0;
+            padding: 9px 13px;
+            border-radius: 9px;
+            background: transparent;
+            color: var(--brown);
+            transition: background 0.2s ease;
+        }
+
+        .view-button.active {
+            background: var(--white);
+            box-shadow: 0 2px 7px #583A2B12;
+            font-weight: 700;
+        }
+
+        /* =========================
+           6. AUFTRAGSKARTEN
+           ========================= */
+
+        .task-list {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 17px;
+        }
+
+        .task-card {
+            position: relative;
+            background: var(--white);
+            padding: 21px;
+            border-radius: 18px;
+            border: 1px solid var(--border);
+            box-shadow: 0 5px 20px rgba(88, 58, 43, 0.035);
+            transition: transform 0.25s ease,
+                        box-shadow 0.25s ease,
+                        border-color 0.25s ease;
+            animation: appear 0.35s ease both;
+        }
+
+        .task-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(185, 95, 60, 0.4);
+            box-shadow: 0 12px 28px rgba(88, 58, 43, 0.09);
+        }
+
+        @keyframes appear {
+            from {
+                opacity: 0;
+                transform: translateY(7px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .category-tag {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 8px;
+            background: #F1E2D3;
+            color: var(--brown);
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .demo-tag {
+            display: inline-block;
+            margin-left: 5px;
+            padding: 5px 8px;
+            border-radius: 7px;
+            background: #F8E9DF;
+            color: #8B4A2F;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .task-card h2 {
+            font-size: 19px;
+            color: var(--brown);
+            margin: 17px 0 9px;
+            line-height: 1.35;
+        }
+
+        .description {
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.65;
+            min-height: 43px;
+            margin: 0 0 18px;
+        }
+
+        .task-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 14px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .task-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .card-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-top: 17px;
+        }
+
+        .reward {
+            font-size: 21px;
+            font-weight: 800;
+            color: var(--rust);
+        }
+
+        .reward small {
+            display: block;
+            font-size: 10px;
+            font-weight: 500;
+            color: var(--muted);
+            margin-top: 3px;
+        }
+
+        .details-button,
+        .primary-button,
+        .secondary-button {
+            border: 0;
+            border-radius: 11px;
+            padding: 11px 15px;
+            font-weight: 700;
+            font-size: 12px;
+            transition: background 0.2s ease,
+                        transform 0.2s ease;
+        }
+
+        .details-button,
+        .primary-button {
+            background: var(--brown);
+            color: white;
+        }
+
+        .details-button:hover,
+        .primary-button:hover {
+            background: var(--rust);
+            transform: translateY(-1px);
+        }
+
+        .secondary-button {
+            background: #F1E4D8;
+            color: var(--brown);
+        }
+
+        .secondary-button:hover {
+            background: #E9D2BE;
+        }
+
+        /* =========================
+           7. KARTENANSICHT
+           ========================= */
+
+        #map {
+            height: 520px;
+            width: 100%;
+            border-radius: 18px;
+            border: 1px solid var(--border);
+            z-index: 1;
+            background: #E8DED1;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            padding: 55px 20px;
+            text-align: center;
+            background: var(--white);
+            border: 1px dashed var(--border);
+            border-radius: 18px;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        /* =========================
+           8. AUFTRAGSDETAILS
+           ========================= */
+
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            display: grid;
+            place-items: center;
+            padding: 20px;
+            background: rgba(42, 32, 27, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal {
+            width: min(520px, 100%);
+            max-height: 90vh;
+            overflow-y: auto;
+            background: var(--white);
+            border-radius: 20px;
+            padding: 27px;
+            box-shadow: 0 25px 80px #0002;
+            animation: appear 0.22s ease;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .modal-header h2 {
+            margin: 12px 0;
+            color: var(--brown);
+        }
+
+        .close-button {
+            border: 0;
+            background: #F1E4D8;
+            border-radius: 9px;
+            width: 35px;
+            height: 35px;
+            flex-shrink: 0;
+            color: var(--brown);
+            font-size: 20px;
+        }
+
+        .modal-description {
+            line-height: 1.7;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .modal-info {
+            padding: 15px;
+            margin: 18px 0;
+            border-radius: 12px;
+            background: var(--cream);
+            line-height: 2;
+            font-size: 13px;
+        }
+
+        .modal-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .notice {
+            font-size: 12px;
+            color: var(--muted);
+            line-height: 1.6;
+            margin-top: 15px;
+        }
+
+        /* =========================
+           9. RESPONSIVES DESIGN
+           ========================= */
+
+        @media (max-width: 1100px) {
+            .sidebar {
+                width: 205px;
+            }
+
+            main {
+                margin-left: 205px;
+                padding-left: 22px;
+                padding-right: 22px;
+            }
+
+            .filter-panel {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .task-list {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .topbar {
+                height: 65px;
+                padding: 0 13px;
+                gap: 8px;
+            }
+
+            .brand-icon {
+                width: 36px;
+                height: 36px;
+            }
+
+            .global-search {
+                max-width: none;
+            }
+
+            .global-search input {
+                font-size: 12px;
+                padding-left: 32px;
+            }
+
+            .search-symbol {
+                left: 10px;
+            }
+
+            .top-action {
+                padding: 8px;
+            }
+
+            .sign-in {
+                padding: 9px 11px;
+                font-size: 12px;
+            }
+
+            .sidebar {
+                top: auto;
+                bottom: 0;
+                width: 100%;
+                height: 66px;
+                padding: 5px;
+                display: flex;
+                justify-content: space-around;
+                align-items: center;
+                background: rgba(255, 252, 246, 0.97);
+                backdrop-filter: blur(14px);
+                border-top: 1px solid var(--border);
+                border-right: 0;
+                overflow-x: auto;
+            }
+
+            .nav-label {
+                display: none;
+            }
+
+            .nav-link {
+                flex: 1;
+                min-width: 51px;
+                padding: 8px 3px;
+                margin: 0;
+                flex-direction: column;
+                justify-content: center;
+                gap: 3px;
+                font-size: 9px;
+                text-align: center;
+            }
+
+            .nav-link:hover {
+                transform: none;
+            }
+
+            .nav-icon {
+                font-size: 17px;
+            }
+
+            main {
+                margin-left: 0;
+                padding: 86px 14px 90px;
+            }
+
+            h1 {
+                font-size: 29px;
+            }
+
+            .filter-panel {
+                grid-template-columns: 1fr;
+                padding: 13px;
+            }
+
+            .toolbar {
+                align-items: flex-start;
+            }
+
+            #map {
+                height: 430px;
+            }
+
+            .task-card {
+                padding: 17px;
+            }
+
+            .task-card h2 {
+                font-size: 17px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- =========================
+         KOPFZEILE
+         ========================= -->
+
+    <header class="topbar">
+
+        <!-- Chatblasen-Logo als SVG, kein Bild erforderlich -->
+        <a class="brand" href="index.html" aria-label="taskflow Startseite">
+            <svg class="brand-icon" viewBox="0 0 48 48"
+                 xmlns="http://www.w3.org/2000/svg"
+                 aria-hidden="true">
+
+                <path d="M5 8 Q5 4 10 4 H29 Q34 4 34 9 V22
+                         Q34 27 29 27 H19 L10 34 V27
+                         Q5 26 5 21 Z"
+                      fill="#B95F3C"/>
+
+                <path d="M17 18 Q17 14 22 14 H38 Q43 14 43 19 V31
+                         Q43 36 38 36 H32 L24 43 V36
+                         Q17 35 17 30 Z"
+                      fill="#583A2B"/>
+            </svg>
+
+            <span class="brand-name">taskflow</span>
+        </a>
+
+        <!-- Globale Suche -->
+        <div class="global-search">
+            <span class="search-symbol">⌕</span>
+            <input id="globalSearch"
+                   type="search"
+                   placeholder="Personen oder Angebote finden..."
+                   aria-label="Personen oder Angebote suchen">
+        </div>
+
+        <button class="top-action" id="notificationButton"
+                type="button" aria-label="Benachrichtigungen">
+            ♧
+        </button>
+
+        <a href="login.html" class="top-action sign-in">Sign in</a>
+    </header>
+
+    <!-- =========================
+         LINKE NAVIGATION
+         ========================= -->
+
+    <nav class="sidebar" aria-label="Hauptnavigation">
+        <div class="nav-label">Navigation</div>
+
+        <a class="nav-link" href="index.html">
+            <span class="nav-icon">⌂</span>
+            <span>Startseite</span>
+        </a>
+
+        <a class="nav-link active" href="aufgaben.html" aria-current="page">
+            <span class="nav-icon">⌕</span>
+            <span>Aufgaben entdecken</span>
+        </a>
+
+        <a class="nav-link" href="meine-auftraege.html">
+            <span class="nav-icon">▤</span>
+            <span>Meine Aufträge</span>
+        </a>
+
+        <a class="nav-link" href="nachrichten.html">
+            <span class="nav-icon">▢</span>
+            <span>Nachrichten</span>
+        </a>
+
+        <a class="nav-link" href="personen.html">
+            <span class="nav-icon">♙</span>
+            <span>Personen finden</span>
+        </a>
+
+        <a class="nav-link" href="profil.html">
+            <span class="nav-icon">◎</span>
+            <span>Mein Profil</span>
+        </a>
+
+        <a class="nav-link" href="einstellungen.html">
+            <span class="nav-icon">⚙</span>
+            <span>Einstellungen</span>
+        </a>
+    </nav>
+
+    <!-- =========================
+         HAUPTINHALT
+         ========================= -->
+
+    <main>
+
+        <section class="page-heading">
+            <div class="eyebrow">Entdecken · Verbinden · Helfen</div>
+            <h1>Finde Aufgaben, die zu dir passen.</h1>
+            <p class="subtitle">
+                Entdecke passende Möglichkeiten in deiner Umgebung
+                und finde Hilfe für alltägliche Aufgaben.
+            </p>
+        </section>
+
+        <!-- Suche und Filter -->
+        <section class="filter-panel" aria-label="Aufträge filtern">
+
+            <div class="field">
+                <label for="taskSearch">Aufgabe suchen</label>
+                <input id="taskSearch" type="search"
+                       placeholder="z. B. Einkaufen, Garten...">
+            </div>
+
+            <div class="field">
+                <label for="categoryFilter">Kategorie</label>
+                <select id="categoryFilter">
+                    <option value="">Alle Kategorien</option>
+                    <option value="Einkaufen">Einkaufen</option>
+                    <option value="Garten">Garten</option>
+                    <option value="Haushalt">Haushalt</option>
+                    <option value="Technik">Technik</option>
+                    <option value="Transport">Transport</option>
+                    <option value="Sonstiges">Sonstiges</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label for="rewardFilter">Mindestvergütung</label>
+                <select id="rewardFilter">
+                    <option value="0">Keine Mindestvergütung</option>
+                    <option value="10">Ab 10 €</option>
+                    <option value="20">Ab 20 €</option>
+                    <option value="30">Ab 30 €</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label for="sortFilter">Sortieren nach</label>
+                <select id="sortFilter">
+                    <option value="relevance">Relevanz</option>
+                    <option value="reward">Vergütung: hoch zuerst</option>
+                    <option value="duration">Dauer: kurz zuerst</option>
+                </select>
+            </div>
+
+        </section>
+
+        <!-- Anzahl der Ergebnisse und Ansichtswechsel -->
+        <section class="toolbar">
+            <div class="result-count" id="resultCount" aria-live="polite">
+                Demo-Aufträge werden geladen ...
+            </div>
+
+            <div class="view-switch" aria-label="Ansicht wählen">
+                <button class="view-button active" id="listViewButton"
+                        type="button" aria-pressed="true">
+                    ▤ Liste
+                </button>
+
+                <button class="view-button" id="mapViewButton"
+                        type="button" aria-pressed="false">
+                    ⌖ Karte
+                </button>
+            </div>
+        </section>
+
+        <!-- Suchergebnisse als Liste -->
+        <section id="taskList" class="task-list"
+                 aria-label="Gefundene Aufträge"></section>
+
+        <!-- Alternative Kartenansicht -->
+        <section id="mapSection" class="hidden"
+                 aria-label="Aufträge auf der Karte">
+            <div id="map"></div>
+        </section>
+
+    </main>
+
+    <!-- =========================
+         MODAL FÜR AUFTRAGSDETAILS
+         ========================= -->
+
+    <div id="modalBackdrop" class="modal-backdrop hidden"
+         role="presentation">
+
+        <section class="modal" role="dialog"
+                 aria-modal="true" aria-labelledby="modalTitle">
+
+            <div class="modal-header">
+                <div>
+                    <span class="category-tag" id="modalCategory"></span>
+                    <h2 id="modalTitle"></h2>
+                </div>
+
+                <button type="button" class="close-button"
+                        id="closeModal" aria-label="Schließen">
+                    ×
+                </button>
+            </div>
+
+            <p class="modal-description" id="modalDescription"></p>
+
+            <div class="modal-info" id="modalInfo"></div>
+
+            <div class="modal-actions">
+                <button type="button" class="primary-button"
+                        id="interestButton">
+                    Interesse vormerken
+                </button>
+
+                <button type="button" class="secondary-button"
+                        id="modalCloseSecondary">
+                    Zurück zur Suche
+                </button>
+            </div>
+
+            <p class="notice" id="modalNotice">
+                Demo-Modus: Es wird keine echte Bewerbung versendet.
+            </p>
+
+        </section>
+    </div>
+
+    <!-- Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        /* =========================
+           1. DEMO-AUFTRAGSDATEN
+           ========================= */
+
+        /*
+         * Diese Aufträge sind Beispieldaten.
+         * Die Koordinaten dienen nur der Demonstration.
+         * Sie stellen keine echten verfügbaren Angebote dar.
+         *
+         * Später soll diese Datenquelle mit index.html
+         * und einer gemeinsamen Datenhaltung verbunden werden.
+         */
+
+        const demoTasks = [
+            {
+                id: 1,
+                title: "Einkaufshilfe gesucht",
+                category: "Einkaufen",
+                description:
+                    "Einige Lebensmittel aus dem Supermarkt mitbringen. " +
+                    "Die Einkaufsliste wird vorab bereitgestellt.",
+                reward: 15,
+                duration: 30,
+                area: "Demo-Gebiet Nord",
+                distance: 1.2,
+                lat: 50.005,
+                lng: 8.58
+            },
+            {
+                id: 2,
+                title: "Hilfe im Garten",
+                category: "Garten",
+                description:
+                    "Unterstützung beim Aufräumen des Gartens und " +
+                    "beim Zusammenrechen von Herbstlaub.",
+                reward: 25,
+                duration: 60,
+                area: "Demo-Gebiet West",
+                distance: 2.4,
+                lat: 49.995,
+                lng: 8.55
+            },
+            {
+                id: 3,
+                title: "Technikhilfe am Computer",
+                category: "Technik",
+                description:
+                    "Bei einer einfachen Software-Einrichtung und " +
+                    "bei grundlegenden Einstellungen helfen.",
+                reward: 20,
+                duration: 45,
+                area: "Demo-Gebiet Mitte",
+                distance: 0.8,
+                lat: 49.998,
+                lng: 8.57
+            },
+            {
+                id: 4,
+                title: "Unterstützung im Haushalt",
+                category: "Haushalt",
+                description:
+                    "Bei leichten Haushaltsaufgaben unterstützen. " +
+                    "Die einzelnen Tätigkeiten werden vorher abgesprochen.",
+                reward: 30,
+                duration: 60,
+                area: "Demo-Gebiet Süd",
+                distance: 3.1,
+                lat: 49.985,
+                lng: 8.59
+            },
+            {
+                id: 5,
+                title: "Kleine Transporthilfe",
+                category: "Transport",
+                description:
+                    "Einige leichte Gegenstände innerhalb der Umgebung " +
+                    "transportieren und beim Tragen helfen.",
+                reward: 20,
+                duration: 40,
+                area: "Demo-Gebiet Ost",
+                distance: 1.7,
+                lat: 50.002,
+                lng: 8.61
+            },
+            {
+                id: 6,
+                title: "Hilfe bei kleinen Besorgungen",
+                category: "Sonstiges",
+                description:
+                    "Bei einer kurzen Besorgung unterstützen. " +
+                    "Details und Ablauf werden vorab abgestimmt.",
+                reward: 10,
+                duration: 20,
+                area: "Demo-Gebiet Mitte",
+                distance: 1.0,
+                lat: 49.992,
+                lng: 8.565
+            }
+        ];
+
+        /* =========================
+           2. ELEMENTE UND ZUSTÄNDE
+           ========================= */
+
+        const taskList = document.getElementById("taskList");
+        const resultCount = document.getElementById("resultCount");
+
+        const taskSearch = document.getElementById("taskSearch");
+        const categoryFilter = document.getElementById("categoryFilter");
+        const rewardFilter = document.getElementById("rewardFilter");
+        const sortFilter = document.getElementById("sortFilter");
+        const globalSearch = document.getElementById("globalSearch");
+
+        const listViewButton = document.getElementById("listViewButton");
+        const mapViewButton = document.getElementById("mapViewButton");
+        const mapSection = document.getElementById("mapSection");
+
+        const modalBackdrop = document.getElementById("modalBackdrop");
+        const closeModalButton = document.getElementById("closeModal");
+        const modalCloseSecondary =
+            document.getElementById("modalCloseSecondary");
+
+        const interestButton = document.getElementById("interestButton");
+
+        let selectedTask = null;
+        let currentTasks = [...demoTasks];
+        let map = null;
+        let markers = [];
+
+        /* =========================
+           3. SUCHE UND FILTER
+           ========================= */
+
+        function getFilteredTasks() {
+            const query = taskSearch.value.trim().toLowerCase();
+            const category = categoryFilter.value;
+            const minReward = Number(rewardFilter.value);
+            const sort = sortFilter.value;
+
+            // Nur Aufgaben berücksichtigen, die alle Filter erfüllen.
+            let results = demoTasks.filter(task => {
+                const searchableText = (
+                    task.title + " " +
+                    task.description + " " +
+                    task.category + " " +
+                    task.area
+                ).toLowerCase();
+
+                const matchesQuery = searchableText.includes(query);
+                const matchesCategory =
+                    !category || task.category === category;
+                const matchesReward = task.reward >= minReward;
+
+                return matchesQuery &&
+                       matchesCategory &&
+                       matchesReward;
+            });
+
+            // Ergebnisse nach dem ausgewählten Kriterium sortieren.
+            if (sort === "reward") {
+                results.sort((a, b) => b.reward - a.reward);
+            } else if (sort === "duration") {
+                results.sort((a, b) => a.duration - b.duration);
+            }
+
+            return results;
+        }
+
+        /* =========================
+           4. AUFTRAGSKARTEN ERSTELLEN
+           ========================= */
+
+        function renderTasks() {
+            currentTasks = getFilteredTasks();
+
+            resultCount.innerHTML =
+                "<strong>" + currentTasks.length + "</strong> " +
+                (currentTasks.length === 1
+                    ? "Demo-Auftrag gefunden"
+                    : "Demo-Aufträge gefunden");
+
+            taskList.replaceChildren();
+
+            if (currentTasks.length === 0) {
+                const empty = document.createElement("div");
+                empty.className = "empty-state";
+
+                const title = document.createElement("strong");
+                title.textContent = "Keine passenden Aufträge gefunden.";
+
+                const message = document.createElement("p");
+                message.textContent =
+                    "Ändere deine Suchbegriffe oder setze einige Filter zurück.";
+
+                const reset = document.createElement("button");
+                reset.className = "secondary-button";
+                reset.type = "button";
+                reset.textContent = "Filter zurücksetzen";
+                reset.addEventListener("click", resetFilters);
+
+                empty.append(title, message, reset);
+                taskList.appendChild(empty);
+
+                updateMapMarkers();
+                return;
+            }
+
+            currentTasks.forEach(task => {
+                const card = document.createElement("article");
+                card.className = "task-card";
+
+                const top = document.createElement("div");
+                top.className = "card-top";
+
+                const tags = document.createElement("div");
+
+                const category = document.createElement("span");
+                category.className = "category-tag";
+                category.textContent = task.category;
+
+                const demo = document.createElement("span");
+                demo.className = "demo-tag";
+                demo.textContent = "DEMO";
+
+                tags.append(category, demo);
+                top.appendChild(tags);
+
+                const title = document.createElement("h2");
+                title.textContent = task.title;
+
+                const description = document.createElement("p");
+                description.className = "description";
+                description.textContent = task.description;
+
+                const meta = document.createElement("div");
+                meta.className = "task-meta";
+
+                [
+                    "⌖ " + task.area,
+                    "◷ " + task.duration + " Min.",
+                    "↔ " + task.distance.toLocaleString("de-DE") + " km"
+                ].forEach(text => {
+                    const item = document.createElement("span");
+                    item.textContent = text;
+                    meta.appendChild(item);
+                });
+
+                const bottom = document.createElement("div");
+                bottom.className = "card-bottom";
+
+                const reward = document.createElement("div");
+                reward.className = "reward";
+                reward.textContent =
+                    task.reward.toLocaleString("de-DE") + " €";
+
+                const rewardLabel = document.createElement("small");
+                rewardLabel.textContent = "Demo-Vergütung";
+                reward.appendChild(rewardLabel);
+
+                const detailsButton = document.createElement("button");
+                detailsButton.className = "details-button";
+                detailsButton.type = "button";
+                detailsButton.textContent = "Details ansehen";
+
+                detailsButton.addEventListener("click", () => {
+                    openTaskDetails(task.id);
+                });
+
+                bottom.append(reward, detailsButton);
+                card.append(top, title, description, meta, bottom);
+                taskList.appendChild(card);
+            });
+
+            updateMapMarkers();
+        }
+
+        /* =========================
+           5. FILTER ZURÜCKSETZEN
+           ========================= */
+
+        function resetFilters() {
+            taskSearch.value = "";
+            categoryFilter.value = "";
+            rewardFilter.value = "0";
+            sortFilter.value = "relevance";
+
+            if (globalSearch) {
+                globalSearch.value = "";
+            }
+
+            renderTasks();
+        }
+
+        /* =========================
+           6. AUFTRAGSDETAILS ÖFFNEN
+           ========================= */
+
+        function openTaskDetails(taskId) {
+            selectedTask = demoTasks.find(task => task.id === taskId);
+
+            if (!selectedTask) return;
+
+            document.getElementById("modalTitle").textContent =
+                selectedTask.title;
+
+            document.getElementById("modalCategory").textContent =
+                selectedTask.category;
+
+            document.getElementById("modalDescription").textContent =
+                selectedTask.description;
+
+            const info = document.getElementById("modalInfo");
+            info.replaceChildren();
+
+            [
+                "Vergütung: " + selectedTask.reward + " € (Demo)",
+                "Dauer: ca. " + selectedTask.duration + " Minuten",
+                "Gebiet: " + selectedTask.area,
+                "Entfernung: ca. " +
+                    selectedTask.distance.toLocaleString("de-DE") + " km",
+                "Status: Beispieldatensatz – nicht buchbar"
+            ].forEach(line => {
+                const row = document.createElement("div");
+                row.textContent = line;
+                info.appendChild(row);
+            });
+
+            document.getElementById("modalNotice").textContent =
+                "Demo-Modus: Interesse wird nicht an andere Personen " +
+                "übermittelt. Es entsteht keine echte Vereinbarung.";
+
+            modalBackdrop.classList.remove("hidden");
+            closeModalButton.focus();
+        }
+
+        function closeModal() {
+            modalBackdrop.classList.add("hidden");
+            selectedTask = null;
+        }
+
+        closeModalButton.addEventListener("click", closeModal);
+        modalCloseSecondary.addEventListener("click", closeModal);
+
+        modalBackdrop.addEventListener("click", event => {
+            if (event.target === modalBackdrop) {
+                closeModal();
+            }
+        });
+
+        document.addEventListener("keydown", event => {
+            if (event.key === "Escape") {
+                closeModal();
+            }
+        });
+
+        /* Die Bewerbung ist derzeit ausdrücklich nur eine Demo. */
+        interestButton.addEventListener("click", () => {
+            if (!selectedTask) return;
+
+            document.getElementById("modalNotice").textContent =
+                "Demo-Aktion: Dein Interesse wurde nur für diese " +
+                "Ansicht vorgemerkt. Es wurde nichts versendet oder gespeichert.";
+
+            interestButton.textContent = "Demo-Aktion ausgeführt";
+            interestButton.disabled = true;
+        });
+
+        /* =========================
+           7. KARTENANSICHT
+           ========================= */
+
+        function initializeMap() {
+            if (map || !window.L) return;
+
+            // Demo-Koordinaten; kein tatsächlicher Standort des Nutzers.
+            map = L.map("map").setView([49.997, 8.58], 13);
+
+            L.tileLayer(
+                "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+                    attribution:
+                        '&copy; <a href="https://www.openstreetmap.org/' +
+                        'copyright">OpenStreetMap</a>-Mitwirkende',
+                    maxZoom: 19
+                }
+            ).addTo(map);
+
+            updateMapMarkers();
+        }
+
+        function updateMapMarkers() {
+            if (!map) return;
+
+            markers.forEach(marker => marker.remove());
+            markers = [];
+
+            currentTasks.forEach(task => {
+                const marker = L.marker([task.lat, task.lng]).addTo(map);
+
+                marker.bindPopup(
+                    "<strong>" + escapeHTML(task.title) + "</strong><br>" +
+                    escapeHTML(task.category) + " · DEMO<br>" +
+                    task.reward + " € · " + task.duration + " Min."
+                );
+
+                marker.on("click", () => {
+                    // Das Detailfenster kann über den Popup-Link geöffnet werden.
+                    marker.bindTooltip("Demo-Auftrag");
+                });
+
+                markers.push(marker);
+            });
+        }
+
+        // Texte für die Karten-Pop-ups absichern.
+        function escapeHTML(value) {
+            return String(value).replace(/[&<>"']/g, character => ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;"
+            })[character]);
+        }
+
+        function showListView() {
+            taskList.classList.remove("hidden");
+            mapSection.classList.add("hidden");
+
+            listViewButton.classList.add("active");
+            mapViewButton.classList.remove("active");
+
+            listViewButton.setAttribute("aria-pressed", "true");
+            mapViewButton.setAttribute("aria-pressed", "false");
+        }
+
+        function showMapView() {
+            taskList.classList.add("hidden");
+            mapSection.classList.remove("hidden");
+
+            listViewButton.classList.remove("active");
+            mapViewButton.classList.add("active");
+
+            listViewButton.setAttribute("aria-pressed", "false");
+            mapViewButton.setAttribute("aria-pressed", "true");
+
+            initializeMap();
+
+            // Leaflet muss nach dem Einblenden die Kartengröße neu ermitteln.
+            if (map) {
+                setTimeout(() => map.invalidateSize(), 50);
+            }
+        }
+
+        listViewButton.addEventListener("click", showListView);
+        mapViewButton.addEventListener("click", showMapView);
+
+        /* =========================
+           8. EINGABEN VERKNÜPFEN
+           ========================= */
+
+        taskSearch.addEventListener("input", renderTasks);
+        categoryFilter.addEventListener("change", renderTasks);
+        rewardFilter.addEventListener("change", renderTasks);
+        sortFilter.addEventListener("change", renderTasks);
+
+        // Die Suche in der Kopfzeile übernimmt den Begriff in die Auftragssuche.
+        globalSearch.addEventListener("input", () => {
+            taskSearch.value = globalSearch.value;
+            renderTasks();
+        });
+
+        document.getElementById("notificationButton")
+            .addEventListener("click", () => {
+                alert(
+                    "Benachrichtigungen sind im aktuellen Demo-Modus " +
+                    "noch nicht mit einem Konto verbunden."
+                );
+            });
+
+        /* =========================
+           9. START
+           ========================= */
+
+        renderTasks();
+    </script>
+
+</body>
+</html>
