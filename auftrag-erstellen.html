@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neuen Auftrag erstellen | taskflow</title>
+
+    <style>
+        /* =========================
+           1. DESIGN UND GRUNDEINSTELLUNGEN
+           ========================= */
+
+        :root {
+            --cream: #F6EFE5;
+            --white: #FFFCF6;
+            --brown: #583A2B;
+            --dark: #2A201B;
+            --rust: #B95F3C;
+            --copper: #D98C64;
+            --muted: #88776B;
+            --border: rgba(88, 58, 43, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Inter, Arial, sans-serif;
+            color: var(--dark);
+            background: var(--cream);
+        }
+
+        button, input, textarea, select {
+            font: inherit;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        /* =========================
+           2. KOPFZEILE
+           ========================= */
+
+        .topbar {
+            height: 76px;
+            position: fixed;
+            inset: 0 0 auto 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            padding: 0 30px;
+            background: rgba(255, 252, 246, 0.93);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            color: var(--brown);
+        }
+
+        .brand-icon {
+            width: 43px;
+            height: 43px;
+            flex-shrink: 0;
+            transition: transform 0.3s ease;
+        }
+
+        .brand:hover .brand-icon {
+            transform: rotate(-5deg) scale(1.06);
+        }
+
+        .brand-name {
+            max-width: 0;
+            overflow: hidden;
+            white-space: nowrap;
+            font-size: 21px;
+            font-weight: 800;
+            opacity: 0;
+            transition: max-width 0.3s ease,
+                        opacity 0.3s ease,
+                        margin 0.3s ease;
+        }
+
+        .brand:hover .brand-name {
+            max-width: 120px;
+            margin-left: 9px;
+            opacity: 1;
+        }
+
+        .top-search {
+            flex: 1;
+            max-width: 530px;
+            margin-left: auto;
+            position: relative;
+        }
+
+        .top-search input {
+            width: 100%;
+            padding: 12px 15px 12px 40px;
+            border: 1px solid transparent;
+            border-radius: 12px;
+            background: var(--cream);
+            outline: none;
+        }
+
+        .top-search input:focus {
+            border-color: var(--copper);
+        }
+
+        .search-symbol {
+            position: absolute;
+            left: 13px;
+            top: 10px;
+            color: var(--muted);
+        }
+
+        .top-button {
+            border: 0;
+            background: transparent;
+            color: var(--brown);
+            padding: 11px;
+            border-radius: 10px;
+        }
+
+        .top-button:hover {
+            background: #F0E2D3;
+        }
+
+        .sign-in {
+            background: var(--brown);
+            color: white;
+            padding: 11px 18px;
+            border-radius: 11px;
+        }
+
+        .sign-in:hover {
+            background: var(--rust);
+        }
+
+        /* =========================
+           3. LINKE NAVIGATION
+           ========================= */
+
+        .sidebar {
+            position: fixed;
+            top: 76px;
+            bottom: 0;
+            left: 0;
+            width: 238px;
+            padding: 25px 15px;
+            background: rgba(255, 252, 246, 0.85);
+            border-right: 1px solid var(--border);
+        }
+
+        .nav-label {
+            margin: 4px 12px 17px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            color: var(--muted);
+            text-transform: uppercase;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            padding: 13px 14px;
+            margin-bottom: 5px;
+            border-radius: 12px;
+            color: var(--muted);
+            font-size: 14px;
+            transition: background 0.2s ease,
+                        color 0.2s ease,
+                        transform 0.2s ease;
+        }
+
+        .nav-link:hover {
+            background: #F2E6D9;
+            color: var(--brown);
+            transform: translateX(3px);
+        }
+
+        .nav-link.active {
+            background: #EBD9C8;
+            color: var(--brown);
+            font-weight: 700;
+            box-shadow: inset 3px 0 var(--rust);
+        }
+
+        .nav-icon {
+            width: 21px;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        /* =========================
+           4. HAUPTBEREICH
+           ========================= */
+
+        main {
+            margin-left: 238px;
+            padding: 108px 32px 45px;
+            max-width: 1400px;
+        }
+
+        .eyebrow {
+            color: var(--rust);
+            text-transform: uppercase;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 1.7px;
+        }
+
+        h1 {
+            margin: 8px 0;
+            color: var(--brown);
+            font-size: clamp(28px, 3vw, 38px);
+            letter-spacing: -1.2px;
+        }
+
+        .intro {
+            margin: 0 0 26px;
+            color: var(--muted);
+            line-height: 1.7;
+            max-width: 680px;
+        }
+
+        /* =========================
+           5. FORMULARAUFBAU
+           ========================= */
+
+        .content-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.6fr)
+                                   minmax(260px, 0.8fr);
+            align-items: start;
+            gap: 22px;
+        }
+
+        .form-panel,
+        .preview-panel {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 19px;
+            box-shadow: 0 6px 24px rgba(88, 58, 43, 0.04);
+        }
+
+        .form-panel {
+            padding: 25px;
+        }
+
+        .section-heading {
+            margin: 0 0 7px;
+            color: var(--brown);
+            font-size: 19px;
+        }
+
+        .section-description {
+            margin: 0 0 24px;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .form-section + .form-section {
+            border-top: 1px solid var(--border);
+            margin-top: 27px;
+            padding-top: 25px;
+        }
+
+        .field {
+            margin-bottom: 19px;
+        }
+
+        .field label,
+        .field-label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--brown);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .required {
+            color: var(--rust);
+        }
+
+        .field input,
+        .field select,
+        .field textarea {
+            display: block;
+            width: 100%;
+            padding: 12px 13px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--dark);
+            background: #FFFEFA;
+            outline: none;
+            transition: border-color 0.2s ease,
+                        box-shadow 0.2s ease;
+        }
+
+        .field input:focus,
+        .field select:focus,
+        .field textarea:focus {
+            border-color: var(--copper);
+            box-shadow: 0 0 0 3px rgba(217, 140, 100, 0.12);
+        }
+
+        .field textarea {
+            min-height: 125px;
+            resize: vertical;
+            line-height: 1.6;
+        }
+
+        .field small {
+            display: block;
+            margin-top: 7px;
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.6;
+        }
+
+        .two-columns {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 15px;
+        }
+
+        .field-error {
+            display: none;
+            margin-top: 6px;
+            color: #A33E2A;
+            font-size: 12px;
+        }
+
+        .field.invalid input,
+        .field.invalid textarea,
+        .field.invalid select {
+            border-color: #A33E2A;
+        }
+
+        .field.invalid .field-error {
+            display: block;
+        }
+
+        .form-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 27px;
+        }
+
+        .primary-button,
+        .secondary-button {
+            border: 0;
+            padding: 13px 17px;
+            border-radius: 11px;
+            font-size: 13px;
+            font-weight: 700;
+            transition: background 0.2s ease,
+                        transform 0.2s ease;
+        }
+
+        .primary-button {
+            color: white;
+            background: var(--brown);
+        }
+
+        .primary-button:hover {
+            background: var(--rust);
+            transform: translateY(-1px);
+        }
+
+        .secondary-button {
+            color: var(--brown);
+            background: #F1E4D8;
+        }
+
+        .secondary-button:hover {
+            background: #E9D2BE;
+        }
+
+        /* =========================
+           6. VORSCHAU
+           ========================= */
+
+        .preview-panel {
+            padding: 22px;
+            position: sticky;
+            top: 96px;
+        }
+
+        .preview-label {
+            display: inline-block;
+            padding: 6px 9px;
+            border-radius: 7px;
+            background: #F1E2D3;
+            color: var(--brown);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.7px;
+        }
+
+        .preview-panel h2 {
+            margin: 17px 0 10px;
+            color: var(--brown);
+            font-size: 22px;
+            line-height: 1.35;
+            overflow-wrap: anywhere;
+        }
+
+        .preview-description {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.7;
+            overflow-wrap: anywhere;
+            white-space: pre-wrap;
+        }
+
+        .preview-details {
+            border-top: 1px solid var(--border);
+            margin-top: 18px;
+            padding-top: 13px;
+        }
+
+        .preview-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 9px 0;
+            font-size: 12px;
+        }
+
+        .preview-row span:first-child {
+            color: var(--muted);
+        }
+
+        .preview-row span:last-child {
+            text-align: right;
+            color: var(--brown);
+            font-weight: 700;
+            overflow-wrap: anywhere;
+        }
+
+        .preview-reward {
+            color: var(--rust) !important;
+            font-size: 18px;
+        }
+
+        .preview-note {
+            margin-top: 17px;
+            padding: 12px;
+            border-radius: 10px;
+            background: var(--cream);
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.6;
+        }
+
+        .status-message {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 12px;
+            background: #F1E4D8;
+            color: var(--brown);
+            font-size: 13px;
+            line-height: 1.7;
+            overflow-wrap: anywhere;
+        }
+
+        .status-message.visible {
+            display: block;
+        }
+
+        /* =========================
+           7. MOBILE UND BEHINDERUNGSARMUT
+           ========================= */
+
+        @media (max-width: 1050px) {
+            .sidebar {
+                width: 205px;
+            }
+
+            main {
+                margin-left: 205px;
+                padding-left: 22px;
+                padding-right: 22px;
+            }
+
+            .content-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .preview-panel {
+                position: static;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .topbar {
+                height: 65px;
+                padding: 0 12px;
+                gap: 8px;
+            }
+
+            .brand-icon {
+                width: 36px;
+                height: 36px;
+            }
+
+            .top-search input {
+                font-size: 12px;
+                padding-left: 31px;
+            }
+
+            .search-symbol {
+                left: 10px;
+            }
+
+            .sign-in {
+                padding: 9px 11px;
+                font-size: 12px;
+            }
+
+            .sidebar {
+                top: auto;
+                bottom: 0;
+                width: 100%;
+                height: 66px;
+                padding: 5px;
+                display: flex;
+                align-items: center;
+                justify-content: space-around;
+                overflow-x: auto;
+                background: rgba(255, 252, 246, 0.97);
+                backdrop-filter: blur(14px);
+                border-top: 1px solid var(--border);
+                border-right: 0;
+            }
+
+            .nav-label {
+                display: none;
+            }
+
+            .nav-link {
+                flex: 1;
+                min-width: 51px;
+                margin: 0;
+                padding: 8px 3px;
+                flex-direction: column;
+                gap: 3px;
+                font-size: 9px;
+                text-align: center;
+            }
+
+            .nav-link:hover {
+                transform: none;
+            }
+
+            .nav-icon {
+                font-size: 17px;
+            }
+
+            main {
+                margin-left: 0;
+                padding: 88px 14px 90px;
+            }
+
+            .form-panel,
+            .preview-panel {
+                padding: 18px;
+            }
+
+            .two-columns {
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+
+            .form-actions button {
+                flex: 1 1 100%;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- =========================
+         KOPFZEILE
+         ========================= -->
+
+    <header class="topbar">
+
+        <a class="brand" href="index.html" aria-label="taskflow Startseite">
+            <svg class="brand-icon" viewBox="0 0 48 48"
+                 xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M5 8 Q5 4 10 4 H29 Q34 4 34 9 V22
+                         Q34 27 29 27 H19 L10 34 V27
+                         Q5 26 5 21 Z"
+                      fill="#B95F3C"/>
+                <path d="M17 18 Q17 14 22 14 H38 Q43 14 43 19 V31
+                         Q43 36 38 36 H32 L24 43 V36
+                         Q17 35 17 30 Z"
+                      fill="#583A2B"/>
+            </svg>
+            <span class="brand-name">taskflow</span>
+        </a>
+
+        <div class="top-search">
+            <span class="search-symbol">⌕</span>
+            <input id="globalSearch" type="search"
+                   placeholder="Personen oder Angebote finden..."
+                   aria-label="Personen oder Angebote suchen">
+        </div>
+
+        <button class="top-button" id="notificationButton"
+                type="button" aria-label="Benachrichtigungen">♧</button>
+
+        <a href="login.html" class="top-button sign-in">Sign in</a>
+    </header>
+
+    <!-- =========================
+         NAVIGATION
+         ========================= -->
+
+    <nav class="sidebar" aria-label="Hauptnavigation">
+        <div class="nav-label">Navigation</div>
+
+        <a class="nav-link" href="index.html">
+            <span class="nav-icon">⌂</span>
+            <span>Startseite</span>
+        </a>
+
+        <a class="nav-link" href="aufgaben.html">
+            <span class="nav-icon">⌕</span>
+            <span>Aufgaben entdecken</span>
+        </a>
+
+        <a class="nav-link active" href="meine-auftraege.html"
+           aria-current="page">
+            <span class="nav-icon">▤</span>
+            <span>Meine Aufträge</span>
+        </a>
+
+        <a class="nav-link" href="nachrichten.html">
+            <span class="nav-icon">▢</span>
+            <span>Nachrichten</span>
+        </a>
+
+        <a class="nav-link" href="personen.html">
+            <span class="nav-icon">♙</span>
+            <span>Personen finden</span>
+        </a>
+
+        <a class="nav-link" href="profil.html">
+            <span class="nav-icon">◎</span>
+            <span>Mein Profil</span>
+        </a>
+
+        <a class="nav-link" href="einstellungen.html">
+            <span class="nav-icon">⚙</span>
+            <span>Einstellungen</span>
+        </a>
+    </nav>
+
+    <!-- =========================
+         HAUPTINHALT
+         ========================= -->
+
+    <main>
+
+        <div class="eyebrow">Deine Idee wird zur Aufgabe</div>
+        <h1>Neuen Auftrag erstellen</h1>
+        <p class="intro">
+            Beschreibe, wobei du Unterstützung brauchst.
+            Ergänze die wichtigsten Angaben und kontrolliere
+            anschließend deine Vorschau.
+        </p>
+
+        <div class="content-layout">
+
+            <!-- Auftragserstellungsformular -->
+            <form id="taskForm" class="form-panel" novalidate>
+
+                <section class="form-section">
+                    <h2 class="section-heading">1. Beschreibe deine Aufgabe</h2>
+                    <p class="section-description">
+                        Formuliere möglichst klar, welche Hilfe du benötigst.
+                    </p>
+
+                    <div class="field" id="titleField">
+                        <label for="taskTitle">
+                            Titel der Aufgabe <span class="required">*</span>
+                        </label>
+                        <input id="taskTitle" name="title" type="text"
+                               maxlength="80" required
+                               placeholder="z. B. Hilfe beim Einkaufen">
+                        <span class="field-error">
+                            Bitte gib einen aussagekräftigen Titel ein.
+                        </span>
+                    </div>
+
+                    <div class="field" id="descriptionField">
+                        <label for="taskDescription">
+                            Beschreibung <span class="required">*</span>
+                        </label>
+                        <textarea id="taskDescription" name="description"
+                                  maxlength="1500" required
+                                  placeholder="Was genau soll erledigt werden? Gibt es besondere Anforderungen?"></textarea>
+                        <small>
+                            Beschreibe den Ablauf, die benötigte Unterstützung
+                            und wichtige Hinweise. Bitte keine privaten
+                            Zugangsdaten oder unnötigen persönlichen Daten angeben.
+                        </small>
+                        <span class="field-error">
+                            Bitte beschreibe die Aufgabe mit mindestens
+                            20 Zeichen.
+                        </span>
+                    </div>
+
+                    <div class="field" id="categoryField">
+                        <label for="taskCategory">
+                            Kategorie <span class="required">*</span>
+                        </label>
+                        <select id="taskCategory" name="category" required>
+                            <option value="">Kategorie auswählen</option>
+                            <option value="Einkaufen">Einkaufen</option>
+                            <option value="Garten">Garten</option>
+                            <option value="Haushalt">Haushalt</option>
+                            <option value="Technik">Technik</option>
+                            <option value="Transport">Transport</option>
+                            <option value="Sonstiges">Sonstiges</option>
+                        </select>
+                        <span class="field-error">
+                            Bitte wähle eine Kategorie aus.
+                        </span>
+                    </div>
+                </section>
+
+                <section class="form-section">
+                    <h2 class="section-heading">2. Termin und Vergütung</h2>
+                    <p class="section-description">
+                        Lege fest, wann die Aufgabe erledigt werden soll
+                        und welche Vergütung du vorschlägst.
+                    </p>
+
+                    <div class="two-columns">
+                        <div class="field" id="dateField">
+                            <label for="taskDate">Gewünschtes Datum</label>
+                            <input id="taskDate" name="date" type="date">
+                            <small>Optional: gewünschter Ausführungstag.</small>
+                            <span class="field-error">
+                                Das Datum darf nicht in der Vergangenheit liegen.
+                            </span>
+                        </div>
+
+                        <div class="field">
+                            <label for="taskTime">Uhrzeit oder Zeitraum</label>
+                            <input id="taskTime" name="time" type="text"
+                                   maxlength="80"
+                                   placeholder="z. B. nachmittags">
+                        </div>
+                    </div>
+
+                    <div class="two-columns">
+                        <div class="field" id="durationField">
+                            <label for="taskDuration">
+                                Dauer in Minuten <span class="required">*</span>
+                            </label>
+                            <input id="taskDuration" name="duration"
+                                   type="number" min="5" max="1440"
+                                   step="5" required value="30">
+                            <span class="field-error">
+                                Gib eine Dauer zwischen 5 und 1440 Minuten ein.
+                            </span>
+                        </div>
+
+                        <div class="field" id="rewardField">
+                            <label for="taskReward">
+                                Vergütung in Euro <span class="required">*</span>
+                            </label>
+                            <input id="taskReward" name="reward"
+                                   type="number" min="0" max="10000"
+                                   step="0.50" required value="15">
+                            <small>0 € ist möglich, wenn keine Vergütung vorgesehen ist.</small>
+                            <span class="field-error">
+                                Gib eine Vergütung zwischen 0 und 10.000 € ein.
+                            </span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="form-section">
+                    <h2 class="section-heading">3. Gebiet und Fähigkeiten</h2>
+                    <p class="section-description">
+                        Beschreibe die ungefähre Umgebung und welche
+                        Kenntnisse für die Aufgabe hilfreich sind.
+                    </p>
+
+                    <div class="field" id="areaField">
+                        <label for="taskArea">
+                            Gebiet oder Ort <span class="required">*</span>
+                        </label>
+                        <input id="taskArea" name="area" type="text"
+                               maxlength="100" required
+                               placeholder="z. B. Stadtteil oder öffentlicher Treffpunkt">
+                        <small>
+                            Verwende für die Demo nur eine allgemeine Ortsangabe,
+                            keine private Wohnadresse.
+                        </small>
+                        <span class="field-error">
+                            Bitte gib ein Gebiet oder einen Ort an.
+                        </span>
+                    </div>
+
+                    <div class="field">
+                        <label for="taskSkills">
+                            Benötigte Fähigkeiten oder Anforderungen
+                        </label>
+                        <textarea id="taskSkills" name="skills"
+                                  maxlength="800"
+                                  placeholder="z. B. Erfahrung mit Pflanzen, gute Deutschkenntnisse"></textarea>
+                    </div>
+                </section>
+
+                <!-- Aktionen des Formulars -->
+                <div class="form-actions">
+                    <button type="button" class="secondary-button"
+                            id="saveDraftButton">
+                        Entwurf speichern
+                    </button>
+
+                    <button type="button" class="secondary-button"
+                            id="previewButton">
+                        Vorschau prüfen
+                    </button>
+
+                    <button type="submit" class="primary-button">
+                        Aufgabe veröffentlichen
+                    </button>
+                </div>
+
+                <div id="statusMessage" class="status-message"
+                     role="status" aria-live="polite"></div>
+
+            </form>
+
+            <!-- Live-Vorschau -->
+            <aside class="preview-panel" aria-label="Auftragsvorschau">
+
+                <span class="preview-label" id="previewStatus">
+                    VORSCHAU
+                </span>
+
+                <h2 id="previewTitle">Dein Aufgabentitel</h2>
+
+                <p id="previewDescription" class="preview-description">
+                    Deine Beschreibung erscheint hier, sobald du sie eingibst.
+                </p>
+
+                <div class="preview-details">
+
+                    <div class="preview-row">
+                        <span>Kategorie</span>
+                        <span id="previewCategory">Noch offen</span>
+                    </div>
+
+                    <div class="preview-row">
+                        <span>Termin</span>
+                        <span id="previewDate">Noch offen</span>
+                    </div>
+
+                    <div class="preview-row">
+                        <span>Dauer</span>
+                        <span id="previewDuration">30 Minuten</span>
+                    </div>
+
+                    <div class="preview-row">
+                        <span>Gebiet</span>
+                        <span id="previewArea">Noch offen</span>
+                    </div>
+
+                    <div class="preview-row">
+                        <span>Vergütung</span>
+                        <span id="previewReward" class="preview-reward">
+                            15,00 €
+                        </span>
+                    </div>
+
+                    <div class="preview-row">
+                        <span>Fähigkeiten</span>
+                        <span id="previewSkills">Keine angegeben</span>
+                    </div>
+
+                </div>
+
+                <div class="preview-note">
+                    Diese Vorschau zeigt deine aktuellen Eingaben.
+                    Im Demo-Modus wird der Auftrag nicht für andere
+                    Nutzer veröffentlicht.
+                </div>
+
+            </aside>
+
+        </div>
+    </main>
+
+    <script>
+        /* =========================
+           1. FORMULARELEMENTE
+           ========================= */
+
+        const form = document.getElementById("taskForm");
+        const statusMessage = document.getElementById("statusMessage");
+
+        const fields = {
+            title: document.getElementById("taskTitle"),
+            description: document.getElementById("taskDescription"),
+            category: document.getElementById("taskCategory"),
+            date: document.getElementById("taskDate"),
+            time: document.getElementById("taskTime"),
+            duration: document.getElementById("taskDuration"),
+            reward: document.getElementById("taskReward"),
+            area: document.getElementById("taskArea"),
+            skills: document.getElementById("taskSkills")
+        };
+
+        const preview = {
+            title: document.getElementById("previewTitle"),
+            description: document.getElementById("previewDescription"),
+            category: document.getElementById("previewCategory"),
+            date: document.getElementById("previewDate"),
+            duration: document.getElementById("previewDuration"),
+            reward: document.getElementById("previewReward"),
+            area: document.getElementById("previewArea"),
+            skills: document.getElementById("previewSkills"),
+            status: document.getElementById("previewStatus")
+        };
+
+        /*
+         * Ein Entwurf und veröffentlichte Demo-Aufträge werden lokal
+         * gespeichert. Das ist nur ein Browser-Prototyp, keine Datenbank.
+         */
+        const STORAGE_KEY = "taskflow_demo_drafts";
+        const PUBLISHED_KEY = "taskflow_demo_published";
+
+        let lastSavedDraft = null;
+
+        /* =========================
+           2. EINGABEN AUSLESEN
+           ========================= */
+
+        function readForm() {
+            return {
+                id: null,
+                title: fields.title.value.trim(),
+                description: fields.description.value.trim(),
+                category: fields.category.value,
+                date: fields.date.value,
+                time: fields.time.value.trim(),
+                duration: Number(fields.duration.value),
+                reward: Number(fields.reward.value),
+                area: fields.area.value.trim(),
+                skills: fields.skills.value.trim(),
+                status: "Entwurf",
+                demo: true
+            };
+        }
+
+        /* =========================
+           3. LIVE-VORSCHAU AKTUALISIEREN
+           ========================= */
+
+        function updatePreview() {
+            const task = readForm();
+
+            // textContent verhindert, dass Eingaben als HTML ausgeführt werden.
+            preview.title.textContent =
+                task.title || "Dein Aufgabentitel";
+
+            preview.description.textContent =
+                task.description ||
+                "Deine Beschreibung erscheint hier, sobald du sie eingibst.";
+
+            preview.category.textContent =
+                task.category || "Noch offen";
+
+            preview.date.textContent = formatDate(task.date, task.time);
+
+            preview.duration.textContent =
+                Number.isFinite(task.duration) && task.duration > 0
+                    ? task.duration + " Minuten"
+                    : "Noch offen";
+
+            preview.reward.textContent =
+                Number.isFinite(task.reward) && task.reward >= 0
+                    ? task.reward.toLocaleString("de-DE", {
+                        style: "currency",
+                        currency: "EUR"
+                    })
+                    : "Noch offen";
+
+            preview.area.textContent = task.area || "Noch offen";
+            preview.skills.textContent = task.skills || "Keine angegeben";
+        }
+
+        function formatDate(date, time) {
+            let result = "Termin flexibel";
+
+            if (date) {
+                const parts = date.split("-");
+
+                if (parts.length === 3) {
+                    result = parts[2] + "." + parts[1] + "." + parts[0];
+                }
+            }
+
+            if (time) {
+                result += " · " + time;
+            }
+
+            return result;
+        }
+
+        Object.values(fields).forEach(field => {
+            field.addEventListener("input", updatePreview);
+            field.addEventListener("change", updatePreview);
+        });
+
+        /* =========================
+           4. FORMULAR VALIDIEREN
+           ========================= */
+
+        function validateForm() {
+            // Vor jeder Prüfung werden alte Fehlermeldungen entfernt.
+            document.querySelectorAll(".field.invalid")
+                .forEach(field => field.classList.remove("invalid"));
+
+            const errors = [];
+
+            function requireField(input, containerId, valid, message) {
+                if (!valid) {
+                    document.getElementById(containerId)
+                        .classList.add("invalid");
+                    errors.push({
+                        input: input,
+                        message: message
+                    });
+                }
+            }
+
+            requireField(
+                fields.title,
+                "titleField",
+                fields.title.value.trim().length >= 3,
+                "Bitte gib einen Titel mit mindestens 3 Zeichen ein."
+            );
+
+            requireField(
+                fields.description,
+                "descriptionField",
+                fields.description.value.trim().length >= 20,
+                "Die Beschreibung muss mindestens 20 Zeichen enthalten."
+            );
+
+            requireField(
+                fields.category,
+                "categoryField",
+                fields.category.value !== "",
+                "Bitte wähle eine Kategorie."
+            );
+
+            const duration = Number(fields.duration.value);
+
+            requireField(
+                fields.duration,
+                "durationField",
+                fields.duration.value !== "" &&
+                Number.isFinite(duration) &&
+                duration >= 5 &&
+                duration <= 1440,
+                "Die Dauer muss zwischen 5 und 1440 Minuten liegen."
+            );
+
+            const reward = Number(fields.reward.value);
+
+            requireField(
+                fields.reward,
+                "rewardField",
+                fields.reward.value !== "" &&
+                Number.isFinite(reward) &&
+                reward >= 0 &&
+                reward <= 10000,
+                "Die Vergütung muss zwischen 0 und 10.000 € liegen."
+            );
+
+            requireField(
+                fields.area,
+                "areaField",
+                fields.area.value.trim().length >= 2,
+                "Bitte gib ein Gebiet oder einen Ort an."
+            );
+
+            if (fields.date.value) {
+                // Lokales Datum prüfen, ohne UTC-Zeitzonenverschiebung.
+                const selected = fields.date.value;
+                const now = new Date();
+
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, "0");
+                const day = String(now.getDate()).padStart(2, "0");
+
+                const today = year + "-" + month + "-" + day;
+
+                requireField(
+                    fields.date,
+                    "dateField",
+                    selected >= today,
+                    "Das Datum darf nicht in der Vergangenheit liegen."
+                );
+            }
+
+            if (errors.length > 0) {
+                showStatus(
+                    errors[0].message,
+                    true
+                );
+
+                errors[0].input.focus();
+                return false;
+            }
+
+            return true;
+        }
+
+        /* =========================
+           5. STATUSMELDUNGEN
+           ========================= */
+
+        function showStatus(message, isError = false) {
+            statusMessage.textContent = message;
+            statusMessage.classList.add("visible");
+
+            statusMessage.style.background = isError
+                ? "#F8E4DE"
+                : "#F1E4D8";
+
+            statusMessage.style.color = isError
+                ? "#8B3023"
+                : "var(--brown)";
+
+            statusMessage.scrollIntoView({
+                behavior: "smooth",
+                block: "nearest"
+            });
+        }
+
+        function clearStatus() {
+            statusMessage.textContent = "";
+            statusMessage.classList.remove("visible");
+        }
+
+        /* =========================
+           6. DATEN LOKAL SPEICHERN
+           ========================= */
+
+        function readStoredArray(key) {
+            try {
+                const value = JSON.parse(localStorage.getItem(key) || "[]");
+                return Array.isArray(value) ? value : [];
+            } catch (error) {
+                return [];
+            }
+        }
+
+        function saveStoredArray(key, items) {
+            try {
+                localStorage.setItem(key, JSON.stringify(items));
+                return true;
+            } catch (error) {
+                showStatus(
+                    "Der Browser konnte die Daten nicht speichern. " +
+                    "Prüfe deine Browsereinstellungen.",
+                    true
+                );
+                return false;
+            }
+        }
+
+        /* =========================
+           7. ENTWURF SPEICHERN
+           ========================= */
+
+        document.getElementById("saveDraftButton")
+            .addEventListener("click", () => {
+                clearStatus();
+
+                const task = readForm();
+
+                if (!task.title && !task.description) {
+                    showStatus(
+                        "Gib zuerst einen Titel oder eine Beschreibung ein.",
+                        true
+                    );
+                    fields.title.focus();
+                    return;
+                }
+
+                const drafts = readStoredArray(STORAGE_KEY);
+
+                if (lastSavedDraft) {
+                    const index = drafts.findIndex(
+                        item => item.id === lastSavedDraft
+                    );
+
+                    if (index !== -1) {
+                        task.id = lastSavedDraft;
+                        drafts[index] = task;
+                    } else {
+                        task.id = createId();
+                        drafts.push(task);
+                    }
+                } else {
+                    task.id = createId();
+                    drafts.push(task);
+                }
+
+                if (!saveStoredArray(STORAGE_KEY, drafts)) {
+                    return;
+                }
+
+                lastSavedDraft = task.id;
+                preview.status.textContent = "ENTWURF";
+
+                showStatus(
+                    "Dein Entwurf wurde lokal in diesem Browser gespeichert. " +
+                    "Er ist nicht für andere Nutzer sichtbar."
+                );
+            });
+
+        /* =========================
+           8. VORSCHAU PRÜFEN
+           ========================= */
+
+        document.getElementById("previewButton")
+            .addEventListener("click", () => {
+                clearStatus();
+                updatePreview();
+
+                if (validateForm()) {
+                    preview.status.textContent = "VORSCHAU GEPRÜFT";
+
+                    showStatus(
+                        "Alle erforderlichen Angaben sind vorhanden. " +
+                        "Prüfe die Vorschau rechts, bevor du fortfährst."
+                    );
+                }
+            });
+
+        /* =========================
+           9. DEMO-VERÖFFENTLICHUNG
+           ========================= */
+
+        form.addEventListener("submit", event => {
+            event.preventDefault();
+            clearStatus();
+
+            if (!validateForm()) {
+                return;
+            }
+
+            const confirmed = window.confirm(
+                "Demo-Veröffentlichung\n\n" +
+                "Der Auftrag wird nur lokal in diesem Browser gespeichert. " +
+                "Er erscheint nicht automatisch auf der Startseite und " +
+                "ist für andere Nutzer nicht sichtbar.\n\n" +
+                "Möchtest du den Demo-Auftrag speichern?"
+            );
+
+            if (!confirmed) {
+                return;
+            }
+
+            const task = readForm();
+            const published = readStoredArray(PUBLISHED_KEY);
+
+            task.id = createId();
+            task.status = "Offen";
+            task.createdAt = new Date().toISOString();
+
+            published.push(task);
+
+            if (!saveStoredArray(PUBLISHED_KEY, published)) {
+                return;
+            }
+
+            preview.status.textContent = "DEMO-AUFTRAG GESPEICHERT";
+
+            showStatus(
+                "Der Auftrag wurde als Demo lokal gespeichert. " +
+                "Es wurde kein echter Auftrag veröffentlicht. " +
+                "Eine gemeinsame Datenbank ist noch nicht verbunden."
+            );
+
+            // Formular bleibt sichtbar, damit die Angaben überprüft werden können.
+        });
+
+        /* =========================
+           10. EINFACHE DEMO-ID
+           ========================= */
+
+        function createId() {
+            return "task_" + Date.now().toString(36) +
+                "_" + Math.random().toString(36).slice(2, 8);
+        }
+
+        /* =========================
+           11. KOPFZEILE
+           ========================= */
+
+        document.getElementById("globalSearch")
+            .addEventListener("keydown", event => {
+                if (event.key === "Enter") {
+                    const query = event.target.value.trim();
+
+                    // Suchbegriff an die Aufgabensuche übergeben.
+                    window.location.href =
+                        "aufgaben.html?q=" + encodeURIComponent(query);
+                }
+            });
+
+        document.getElementById("notificationButton")
+            .addEventListener("click", () => {
+                alert(
+                    "Benachrichtigungen sind im Demo-Modus " +
+                    "noch nicht mit einem Benutzerkonto verbunden."
+                );
+            });
+
+        /* =========================
+           12. SEITE INITIALISIEREN
+           ========================= */
+
+        // Als frühestes wählbares Datum wird heute gesetzt.
+        const now = new Date();
+
+        const minDate = [
+            now.getFullYear(),
+            String(now.getMonth() + 1).padStart(2, "0"),
+            String(now.getDate()).padStart(2, "0")
+        ].join("-");
+
+        fields.date.min = minDate;
+
+        updatePreview();
+    </script>
+
+</body>
+</html>
