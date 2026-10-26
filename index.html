@@ -1,0 +1,2457 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#211a17">
+    <title>taskflow — Gemeinsam geht's leichter</title>
+
+    <!-- Leaflet ermöglicht die interaktive OpenStreetMap-Karte. -->
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+    <style>
+        /* =========================================
+           1. GRUNDDESIGN UND FARBEN
+           ========================================= */
+
+        :root {
+            --bg: #f6efe5;
+            --paper: rgba(255, 252, 246, 0.90);
+            --ink: #2a201b;
+            --brown: #583a2b;
+            --brown-light: #79513b;
+            --rust: #b95f3c;
+            --rust-light: #d98c64;
+            --muted: #88776b;
+            --line: rgba(88, 58, 43, 0.15);
+            --sidebar-width: 252px;
+            --topbar-height: 86px;
+            --glow: 0 0 22px rgba(185, 95, 60, 0.22);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            color: var(--ink);
+            background:
+                radial-gradient(
+                    ellipse at 80% 8%,
+                    rgba(217, 140, 100, 0.17),
+                    transparent 35%
+                ),
+                radial-gradient(
+                    ellipse at 15% 75%,
+                    rgba(88, 58, 43, 0.07),
+                    transparent 34%
+                ),
+                var(--bg);
+            font-family: Inter, system-ui, "Segoe UI", sans-serif;
+            overflow-x: hidden;
+        }
+
+        button,
+        input {
+            font: inherit;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        button {
+            color: inherit;
+        }
+
+        ::selection {
+            background: rgba(185, 95, 60, 0.22);
+        }
+
+        /* =========================================
+           2. FUTURISTISCHER HINTERGRUND
+           ========================================= */
+
+        .ambient-grid {
+            position: fixed;
+            inset: 0;
+            z-index: -3;
+            pointer-events: none;
+            opacity: 0.20;
+            background-image:
+                linear-gradient(
+                    rgba(88, 58, 43, 0.07) 1px,
+                    transparent 1px
+                ),
+                linear-gradient(
+                    90deg,
+                    rgba(88, 58, 43, 0.07) 1px,
+                    transparent 1px
+                );
+            background-size: 46px 46px;
+            mask-image: linear-gradient(to bottom, black, transparent 90%);
+        }
+
+        .ambient-orb {
+            position: fixed;
+            z-index: -2;
+            width: 360px;
+            height: 360px;
+            border-radius: 50%;
+            filter: blur(70px);
+            opacity: 0.14;
+            pointer-events: none;
+            background: var(--rust-light);
+        }
+
+        .orb-one {
+            top: 16%;
+            right: 4%;
+        }
+
+        .orb-two {
+            bottom: 3%;
+            left: 18%;
+            background: #a77b58;
+            width: 280px;
+            height: 280px;
+        }
+
+        /* =========================================
+           3. FALLENDE KASTANIENBLÄTTER
+           Das SVG wird weiter unten mit JavaScript
+           erzeugt. Jedes Blatt hat sieben Fiederblätter.
+           ========================================= */
+
+        .leaf-field {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .falling-leaf {
+            position: absolute;
+            top: -190px;
+            width: var(--size, 120px);
+            height: var(--size, 120px);
+            opacity: var(--opacity, 0.16);
+            animation:
+                leaf-fall var(--duration, 22s)
+                linear var(--delay, 0s) infinite;
+            transform-origin: center;
+        }
+
+        .falling-leaf svg {
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+            filter: drop-shadow(
+                0 8px 8px rgba(65, 40, 25, 0.10)
+            );
+            animation: leaf-turn 7s ease-in-out infinite alternate;
+        }
+
+        .falling-leaf path {
+            stroke: rgba(88, 58, 43, 0.50);
+            stroke-width: 1.15;
+            stroke-linejoin: round;
+        }
+
+        @keyframes leaf-fall {
+            0% {
+                transform: translate(0, -5vh) rotate(-16deg);
+            }
+
+            25% {
+                transform: translate(38px, 28vh) rotate(34deg);
+            }
+
+            55% {
+                transform: translate(-28px, 59vh) rotate(105deg);
+            }
+
+            80% {
+                transform: translate(25px, 86vh) rotate(190deg);
+            }
+
+            100% {
+                transform: translate(-12px, 120vh) rotate(270deg);
+            }
+        }
+
+        @keyframes leaf-turn {
+            from {
+                transform: rotate(-15deg) scale(0.94);
+            }
+
+            to {
+                transform: rotate(18deg) scale(1.04);
+            }
+        }
+
+        /* =========================================
+           4. FESTE KOPFZEILE
+           ========================================= */
+
+        .topbar {
+            height: var(--topbar-height);
+            position: fixed;
+            z-index: 50;
+            inset: 0 0 auto 0;
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            padding: 0 34px;
+            background: rgba(255, 250, 242, 0.79);
+            backdrop-filter: blur(22px) saturate(140%);
+            border-bottom: 1px solid var(--line);
+        }
+
+        /* Logo aus zwei überlappenden Chatblasen. */
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 184px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .brand-mark {
+            width: 42px;
+            height: 38px;
+            flex: 0 0 42px;
+            position: relative;
+        }
+
+        .brand-mark svg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            transition:
+                transform 0.35s ease,
+                filter 0.35s ease;
+        }
+
+        .bubble-back {
+            transform: translate(6px, -3px) rotate(5deg);
+        }
+
+        .bubble-front {
+            transform: translate(-2px, 4px) rotate(-4deg);
+        }
+
+        .brand:hover .bubble-back {
+            transform: translate(10px, -6px) rotate(11deg);
+        }
+
+        .brand:hover .bubble-front {
+            transform: translate(-5px, 6px) rotate(-9deg);
+            filter: drop-shadow(
+                0 5px 7px rgba(185, 95, 60, 0.25)
+            );
+        }
+
+        /* Der Schriftzug klappt rechts neben dem Logo aus. */
+
+        .brand-word {
+            display: inline-block;
+            max-width: 0;
+            opacity: 0;
+            overflow: hidden;
+            white-space: nowrap;
+            transform: translateX(-7px);
+            color: var(--brown);
+            font-size: 19px;
+            font-weight: 800;
+            letter-spacing: -0.8px;
+            transition:
+                max-width 0.42s ease,
+                opacity 0.3s ease,
+                transform 0.42s ease;
+        }
+
+        .brand:hover .brand-word,
+        .brand:focus-visible .brand-word,
+        .brand:focus-within .brand-word {
+            max-width: 120px;
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* Suchfeld in der Kopfzeile. */
+
+        .top-search {
+            position: relative;
+            flex: 1;
+            max-width: 620px;
+        }
+
+        .top-search svg {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;
+            color: var(--muted);
+            pointer-events: none;
+        }
+
+        .top-search input {
+            width: 100%;
+            height: 45px;
+            padding: 0 16px 0 45px;
+            border: 1px solid var(--line);
+            border-radius: 15px;
+            outline: none;
+            color: var(--ink);
+            background: rgba(255, 255, 255, 0.58);
+            transition: 0.25s;
+        }
+
+        .top-search input:focus {
+            border-color: var(--rust);
+            background: white;
+            box-shadow: var(--glow);
+        }
+
+        .top-search input::placeholder {
+            color: #9d8d80;
+        }
+
+        .top-actions {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 13px;
+        }
+
+        .signin {
+            border: 0;
+            background: transparent;
+            padding: 11px 15px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.25s, color 0.25s;
+        }
+
+        .signin:hover {
+            background: rgba(88, 58, 43, 0.08);
+            color: var(--rust);
+        }
+
+        .icon-button {
+            width: 44px;
+            height: 44px;
+            display: grid;
+            place-items: center;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.62);
+            border-radius: 14px;
+            cursor: pointer;
+            position: relative;
+            transition: 0.22s;
+        }
+
+        .icon-button svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .icon-button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--glow);
+            background: white;
+        }
+
+        .notification-dot {
+            position: absolute;
+            right: 9px;
+            top: 8px;
+            width: 7px;
+            height: 7px;
+            background: var(--rust);
+            border-radius: 50%;
+            box-shadow: 0 0 0 3px #fffaf2;
+        }
+
+        /* =========================================
+           5. LINKES NAVIGATIONSMENÜ
+           Bleibt links fixiert.
+           ========================================= */
+
+        .sidebar {
+            position: fixed;
+            z-index: 30;
+            left: 0;
+            top: var(--topbar-height);
+            bottom: 0;
+            width: var(--sidebar-width);
+            padding: 28px 18px 22px;
+            background: rgba(255, 250, 242, 0.72);
+            backdrop-filter: blur(18px);
+            border-right: 1px solid var(--line);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .side-label {
+            margin: 5px 13px 13px;
+            color: #a08d7e;
+            text-transform: uppercase;
+            letter-spacing: 1.7px;
+            font-size: 10px;
+            font-weight: 800;
+        }
+
+        .nav-list {
+            display: grid;
+            gap: 7px;
+        }
+
+        .nav-link {
+            min-height: 48px;
+            padding: 0 13px;
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            border-radius: 14px;
+            color: #78675b;
+            font-weight: 650;
+            font-size: 13.5px;
+            position: relative;
+            overflow: hidden;
+            transition: 0.25s;
+        }
+
+        .nav-link svg {
+            width: 19px;
+            height: 19px;
+            flex: 0 0 19px;
+            transition: transform 0.25s;
+        }
+
+        .nav-link:hover {
+            color: var(--brown);
+            background: rgba(185, 95, 60, 0.08);
+            transform: translateX(3px);
+        }
+
+        .nav-link:hover svg {
+            transform: scale(1.09);
+        }
+
+        .nav-link.active {
+            color: #fff9f1;
+            background: linear-gradient(
+                110deg,
+                var(--brown),
+                #7a4c35
+            );
+            box-shadow: 0 8px 20px rgba(88, 58, 43, 0.18);
+        }
+
+        .nav-link.active::after {
+            content: "";
+            position: absolute;
+            right: 0;
+            top: 11px;
+            bottom: 11px;
+            width: 3px;
+            border-radius: 5px 0 0 5px;
+            background: #e5a17c;
+        }
+
+        .nav-link.active svg {
+            color: #f0c0a3;
+        }
+
+        .nav-count {
+            margin-left: auto;
+            font-size: 10px;
+            padding: 3px 7px;
+            border-radius: 8px;
+            background: rgba(185, 95, 60, 0.12);
+            color: var(--rust);
+        }
+
+        .sidebar-spacer {
+            flex: 1;
+            min-height: 32px;
+        }
+
+        .side-bottom {
+            display: flex;
+            justify-content: space-between;
+            padding: 18px 5px 0;
+            color: #a08d7e;
+            font-size: 10px;
+        }
+
+        /* =========================================
+           6. HAUPTBEREICH
+           Karte zuerst, danach nur zwei Aktionen.
+           ========================================= */
+
+        .main {
+            margin-left: var(--sidebar-width);
+            padding:
+                calc(var(--topbar-height) + 32px)
+                34px 35px;
+            min-width: 0;
+        }
+
+        .content-wrap {
+            width: 100%;
+            max-width: 1540px;
+            margin: 0 auto;
+        }
+
+        .home-map-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Die Karte ist das größte Element der Startseite. */
+
+        .map-panel {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 24px;
+            background: var(--paper);
+            backdrop-filter: blur(18px);
+            box-shadow: 0 18px 55px rgba(69, 43, 28, 0.10);
+            min-width: 0;
+        }
+
+        .home-map-panel {
+            width: 100%;
+            height: calc(100vh - var(--topbar-height) - 150px);
+            min-height: 480px;
+        }
+
+        .panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 22px 24px 17px;
+        }
+
+        .panel-head h2 {
+            margin: 0;
+            color: var(--brown);
+            font-size: clamp(20px, 2vw, 27px);
+            letter-spacing: -0.7px;
+        }
+
+        .panel-head p {
+            margin: 5px 0 0;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            white-space: nowrap;
+            color: #796858;
+            font-size: 10px;
+        }
+
+        .live-indicator::before {
+            content: "";
+            width: 7px;
+            height: 7px;
+            background: #86a56c;
+            border-radius: 50%;
+            box-shadow: 0 0 0 4px rgba(134, 165, 108, 0.13);
+        }
+
+        /* Kartenfilter und Standortbutton. */
+
+        .map-toolbar {
+            padding: 0 24px 16px;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            flex-wrap: wrap;
+        }
+
+        .filter-chip {
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.65);
+            border-radius: 9px;
+            padding: 7px 10px;
+            font-size: 10px;
+            color: #7e6a5c;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .filter-chip:hover,
+        .filter-chip.active {
+            border-color: rgba(185, 95, 60, 0.4);
+            color: var(--rust);
+            background: #fbede3;
+            box-shadow: 0 0 0 2px rgba(185, 95, 60, 0.05);
+        }
+
+        .map-filter-spacer {
+            flex: 1;
+        }
+
+        .location-button {
+            border: 0;
+            background: transparent;
+            color: var(--rust);
+            font-size: 10px;
+            font-weight: 800;
+            cursor: pointer;
+            padding: 7px 0 7px 8px;
+        }
+
+        .location-button:hover {
+            text-decoration: underline;
+        }
+
+        #task-map {
+            width: 100%;
+            min-height: 340px;
+            flex: 1;
+            z-index: 1;
+            background: #eadfd0;
+        }
+
+        .map-foot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 19px;
+            color: var(--muted);
+            font-size: 9px;
+            border-top: 1px solid var(--line);
+        }
+
+        .map-legend {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--rust);
+        }
+
+        .legend-dot.brown {
+            background: var(--brown);
+        }
+
+        /* =========================================
+           7. DIE ZWEI HAUPTBUTTONS
+           Keine weiteren Aktionskarten.
+           ========================================= */
+
+        .home-actions {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .btn {
+            min-height: 58px;
+            padding: 0 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            border: 1px solid transparent;
+            border-radius: 15px;
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition:
+                transform 0.25s,
+                box-shadow 0.25s,
+                background 0.25s,
+                border-color 0.25s;
+        }
+
+        .btn::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -120%;
+            width: 80%;
+            height: 100%;
+            transform: skewX(-20deg);
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.28),
+                transparent
+            );
+            transition: left 0.55s;
+            pointer-events: none;
+        }
+
+        .btn:hover::before {
+            left: 140%;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn svg {
+            width: 21px;
+            height: 21px;
+            flex: 0 0 auto;
+        }
+
+        .btn-primary {
+            color: #fff9f1;
+            background: linear-gradient(
+                115deg,
+                var(--brown),
+                #80503a
+            );
+            box-shadow:
+                0 12px 28px rgba(88, 58, 43, 0.18),
+                0 0 0 1px rgba(217, 140, 100, 0.18);
+        }
+
+        .btn-primary:hover {
+            box-shadow:
+                0 16px 35px rgba(88, 58, 43, 0.24),
+                0 0 26px rgba(185, 95, 60, 0.22);
+        }
+
+        .btn-secondary {
+            color: var(--brown);
+            background: rgba(255, 250, 242, 0.86);
+            border-color: rgba(88, 58, 43, 0.2);
+        }
+
+        .btn-secondary:hover {
+            border-color: rgba(185, 95, 60, 0.55);
+            box-shadow: var(--glow);
+            background: white;
+        }
+
+        .action-arrow {
+            margin-left: auto;
+            font-size: 20px;
+            transition: transform 0.25s;
+        }
+
+        .btn:hover .action-arrow {
+            transform: translate(3px, -3px);
+        }
+
+        /* =========================================
+           8. BENACHRICHTIGUNGEN
+           ========================================= */
+
+        .notification-popover {
+            position: fixed;
+            top: 73px;
+            right: 32px;
+            z-index: 100;
+            width: min(320px, calc(100vw - 24px));
+            padding: 17px;
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            background: rgba(255, 250, 242, 0.97);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 18px 55px rgba(69, 43, 28, 0.15);
+            display: none;
+        }
+
+        .notification-popover.open {
+            display: block;
+            animation: pop-in 0.22s ease-out;
+        }
+
+        @keyframes pop-in {
+            from {
+                opacity: 0;
+                transform: translateY(-7px) scale(0.98);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .notification-popover h3 {
+            margin: 0 0 12px;
+            font-size: 14px;
+            color: var(--brown);
+        }
+
+        .notification-row {
+            display: flex;
+            gap: 10px;
+            padding: 11px 0;
+            border-top: 1px solid var(--line);
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.5;
+        }
+
+        .notification-row strong {
+            color: var(--brown);
+        }
+
+        .notification-mini {
+            width: 30px;
+            height: 30px;
+            flex: 0 0 30px;
+            border-radius: 10px;
+            display: grid;
+            place-items: center;
+            background: #f2dfcf;
+            color: var(--rust);
+        }
+
+        .notification-mini svg {
+            width: 15px;
+        }
+
+        /* =========================================
+           9. AUFTRAGSDETAILS ALS DIALOG
+           ========================================= */
+
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 300;
+            padding: 20px;
+            background: rgba(35, 24, 18, 0.38);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-backdrop.open {
+            display: flex;
+            animation: fade-in 0.2s ease-out;
+        }
+
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal {
+            width: min(440px, 100%);
+            background: #fffaf2;
+            border: 1px solid rgba(217, 140, 100, 0.5);
+            border-radius: 22px;
+            padding: 24px;
+            box-shadow: 0 25px 90px rgba(35, 24, 18, 0.28);
+            animation: modal-in 0.28s ease;
+        }
+
+        @keyframes modal-in {
+            from {
+                transform: translateY(12px) scale(0.97);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .modal-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .modal-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 15px;
+            display: grid;
+            place-items: center;
+            background: #f2dfcf;
+            color: var(--rust);
+        }
+
+        .modal-icon svg {
+            width: 23px;
+            height: 23px;
+        }
+
+        .modal-close {
+            width: 34px;
+            height: 34px;
+            border: 1px solid var(--line);
+            border-radius: 11px;
+            background: white;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .modal h2 {
+            color: var(--brown);
+            font-size: 22px;
+            letter-spacing: -0.6px;
+            margin: 17px 0 8px;
+        }
+
+        .modal p {
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        .modal-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 18px 0;
+        }
+
+        .detail-tile {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.6);
+        }
+
+        .detail-tile span {
+            display: block;
+            color: var(--muted);
+            font-size: 10px;
+            margin-bottom: 5px;
+        }
+
+        .detail-tile strong {
+            color: var(--brown);
+            font-size: 12px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 19px;
+        }
+
+        .modal-actions .btn {
+            flex: 1;
+        }
+
+        /* =========================================
+           10. KLICK-EFFEKTE UND MELDUNGEN
+           ========================================= */
+
+        .click-ripple {
+            position: fixed;
+            z-index: 1000;
+            width: 12px;
+            height: 12px;
+            border: 1px solid rgba(185, 95, 60, 0.7);
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate(-50%, -50%) scale(0);
+            animation: ripple-out 0.55s ease-out forwards;
+        }
+
+        @keyframes ripple-out {
+            0% {
+                opacity: 0.8;
+                transform: translate(-50%, -50%) scale(0.2);
+                box-shadow: 0 0 0 0 rgba(185, 95, 60, 0.18);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(6);
+                box-shadow: 0 0 0 13px rgba(185, 95, 60, 0);
+            }
+        }
+
+        .toast {
+            position: fixed;
+            z-index: 200;
+            right: 24px;
+            bottom: 24px;
+            max-width: min(360px, calc(100vw - 32px));
+            padding: 14px 17px;
+            color: #fff9f1;
+            background: #38271e;
+            border: 1px solid rgba(217, 140, 100, 0.45);
+            border-radius: 14px;
+            box-shadow: 0 15px 45px rgba(40, 25, 17, 0.28);
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            font-size: 12px;
+            line-height: 1.5;
+            opacity: 0;
+            transform: translateY(14px);
+            pointer-events: none;
+            transition: 0.28s;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast-mark {
+            width: 8px;
+            height: 8px;
+            flex: 0 0 8px;
+            background: var(--rust-light);
+            border-radius: 50%;
+            box-shadow: 0 0 0 4px rgba(217, 140, 100, 0.15);
+        }
+
+        /* =========================================
+           11. RESPONSIVES DESIGN
+           ========================================= */
+
+        @media (max-width: 900px) {
+            :root {
+                --topbar-height: 74px;
+                --sidebar-width: 76px;
+            }
+
+            .topbar {
+                padding: 0 18px;
+                gap: 14px;
+            }
+
+            .brand {
+                min-width: 48px;
+            }
+
+            .brand-word {
+                display: none;
+            }
+
+            .sidebar {
+                padding: 22px 10px 16px;
+                align-items: center;
+            }
+
+            .side-label,
+            .nav-link span,
+            .nav-count,
+            .side-bottom {
+                display: none;
+            }
+
+            .nav-list {
+                width: 100%;
+            }
+
+            .nav-link {
+                justify-content: center;
+                padding: 0;
+                min-height: 48px;
+            }
+
+            .nav-link svg {
+                width: 21px;
+                height: 21px;
+            }
+
+            .main {
+                padding:
+                    calc(var(--topbar-height) + 26px)
+                    20px 28px;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .home-map-panel {
+                height: calc(100vh - var(--topbar-height) - 190px);
+                min-height: 430px;
+            }
+
+            .home-map-panel .panel-head {
+                padding: 17px 16px 13px;
+            }
+
+            .map-toolbar {
+                padding: 0 16px 12px;
+            }
+
+            .home-actions {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .btn {
+                min-height: 58px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            :root {
+                --topbar-height: 68px;
+                --sidebar-width: 0px;
+            }
+
+            .topbar {
+                height: var(--topbar-height);
+                padding: 0 12px;
+                gap: 9px;
+            }
+
+            .brand {
+                min-width: 40px;
+            }
+
+            .brand-mark {
+                width: 36px;
+                height: 34px;
+                flex-basis: 36px;
+            }
+
+            .top-search input {
+                height: 40px;
+                padding-left: 36px;
+                font-size: 11px;
+            }
+
+            .top-search svg {
+                left: 12px;
+                width: 15px;
+            }
+
+            .top-actions {
+                gap: 4px;
+            }
+
+            .signin {
+                font-size: 11px;
+                padding: 9px 8px;
+            }
+
+            .icon-button {
+                width: 38px;
+                height: 38px;
+                border-radius: 12px;
+            }
+
+            /* Auf sehr schmalen Bildschirmen wird die Navigation
+               zu einer Leiste am unteren Rand. */
+
+            .sidebar {
+                position: fixed;
+                left: 0;
+                right: 0;
+                top: auto;
+                bottom: 0;
+                width: 100%;
+                height: 67px;
+                padding: 7px 8px;
+                border-right: 0;
+                border-top: 1px solid var(--line);
+                flex-direction: row;
+                justify-content: center;
+                background: rgba(255, 250, 242, 0.93);
+                z-index: 60;
+                overflow: visible;
+            }
+
+            .nav-list {
+                display: flex;
+                justify-content: space-around;
+                gap: 3px;
+            }
+
+            .nav-link {
+                flex: 1;
+                min-width: 0;
+                min-height: 49px;
+                border-radius: 12px;
+            }
+
+            .nav-link.active::after {
+                right: 50%;
+                top: auto;
+                bottom: 1px;
+                left: 50%;
+                width: 15px;
+                height: 2px;
+                transform: translateX(50%);
+                border-radius: 3px;
+            }
+
+            .main {
+                margin-left: 0;
+                padding:
+                    calc(var(--topbar-height) + 23px)
+                    13px 90px;
+            }
+
+            .panel-head {
+                padding: 16px 15px 12px;
+            }
+
+            #task-map {
+                min-height: 285px;
+            }
+
+            .map-foot {
+                padding: 11px 13px;
+                font-size: 8px;
+            }
+
+            .map-legend {
+                gap: 8px;
+            }
+
+            .notification-popover {
+                top: 61px;
+                right: 9px;
+            }
+
+            .toast {
+                right: 12px;
+                bottom: 82px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                scroll-behavior: auto !important;
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Dekorativer Hintergrund -->
+    <div class="ambient-grid" aria-hidden="true"></div>
+    <div class="ambient-orb orb-one" aria-hidden="true"></div>
+    <div class="ambient-orb orb-two" aria-hidden="true"></div>
+
+    <!-- Hier werden die fallenden Kastanienblätter eingefügt. -->
+    <div class="leaf-field" id="leaf-field" aria-hidden="true"></div>
+
+    <!-- =========================================
+         12. KOPFZEILE
+         ========================================= -->
+
+    <header class="topbar">
+
+        <!-- Logo: zwei überlappende Chatblasen -->
+        <a class="brand"
+           href="index.html"
+           aria-label="taskflow Startseite">
+
+            <span class="brand-mark" aria-hidden="true">
+
+                <!-- Hintere Chatblase -->
+                <svg class="bubble-back"
+                     viewBox="0 0 48 42"
+                     fill="none">
+                    <path
+                        d="M8 5.5C8 2.9 10.1 1 12.7 1H38c2.6 0 4.7 2.1 4.7 4.7v18.2c0 2.6-2.1 4.7-4.7 4.7H25l-8.7 7.1c-.8.7-2 .1-2-.9v-6.2h-1.6C10.1 28.6 8 26.5 8 24V5.5Z"
+                        fill="#D98C64"
+                        stroke="#583A2B"
+                        stroke-width="1.3"
+                        stroke-linejoin="round"/>
+                </svg>
+
+                <!-- Vordere Chatblase -->
+                <svg class="bubble-front"
+                     viewBox="0 0 48 42"
+                     fill="none">
+                    <path
+                        d="M3 7.3C3 4.7 5.1 2.6 7.7 2.6h25.6C35.9 2.6 38 4.7 38 7.3v17.9c0 2.6-2.1 4.7-4.7 4.7H20l-9.1 7c-.8.6-1.9.1-1.9-.9v-6.1h-1.3C5.1 29.9 3 27.8 3 25.2V7.3Z"
+                        fill="#583A2B"
+                        stroke="#F6EFE5"
+                        stroke-width="1.1"
+                        stroke-linejoin="round"/>
+
+                    <circle cx="13" cy="16.5" r="1.7" fill="#FFF8EE"/>
+                    <circle cx="20.5" cy="16.5" r="1.7" fill="#FFF8EE"/>
+                    <circle cx="28" cy="16.5" r="1.7" fill="#FFF8EE"/>
+                </svg>
+            </span>
+
+            <span class="brand-word">taskflow</span>
+        </a>
+
+        <!-- Globale Suche -->
+        <label class="top-search" aria-label="Aufträge suchen">
+            <svg viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="1.8"
+                 stroke-linecap="round">
+                <circle cx="10.8" cy="10.8" r="6.8"/>
+                <path d="m16 16 4.5 4.5"/>
+            </svg>
+
+            <input
+                id="global-search"
+                type="search"
+                placeholder="Aufträge nach Titel, Kategorie oder Ort suchen …"
+                autocomplete="off">
+        </label>
+
+        <div class="top-actions">
+
+            <button class="signin"
+                    id="signin-button"
+                    type="button">
+                Sign in <span aria-hidden="true">↗</span>
+            </button>
+
+            <!-- Glocke für Benachrichtigungen -->
+            <button class="icon-button"
+                    id="notifications-button"
+                    type="button"
+                    aria-label="Benachrichtigungen öffnen"
+                    aria-expanded="false">
+
+                <svg viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.7"
+                     stroke-linecap="round"
+                     stroke-linejoin="round">
+                    <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/>
+                    <path d="M10 21h4"/>
+                </svg>
+
+                <span class="notification-dot"
+                      id="notification-dot"></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- =========================================
+         13. LINKE NAVIGATIONSLEISTE
+         ========================================= -->
+
+    <aside class="sidebar" aria-label="Hauptnavigation">
+
+        <div class="side-label">Workspace</div>
+
+        <nav class="nav-list">
+
+            <a class="nav-link active"
+               href="index.html"
+               aria-current="page"
+               title="Startseite">
+                <svg viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.7"
+                     stroke-linecap="round"
+                     stroke-linejoin="round">
+                    <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1V10Z"/>
+                </svg>
+                <span>Startseite</span>
+            </a>
+
+            <a class="nav-link"
+               href="aufgaben.html"
+               title="Aufgaben entdecken">
+                <svg viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.7"
+                     stroke-linecap="round"
+                     stroke-linejoin="round">
+                    <rect x="4" y="4" width="16" height="17" rx="2"/>
+                    <path d="M8 4V2h8v2M8 10h8M8 14h5"/>
+                </svg>
+                <span>Aufgaben entdecken</span>
+                <span class="nav-count">6</span>
+            </a>
+
+            <a class="nav-link"
+               href="meine-auftraege.html"
+               title="Meine Aufträge">
+                <svg viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.7"
+                     stroke-linecap="round"
+                     stroke-linejoin="round">
+                    <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21V5.5Z"/>
+                    <path d="M4 6v15M8 7h8M8 11h7"/>
+                </svg>
+                <span>Meine Aufträge</span>
+            </a>
+
+            <a class="nav-link"
+               href="nachrichten.html"
+               title="Nachrichten">
+                <svg viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.7"
+                     stroke-linecap="round"
+                     stroke-linejoin="round">
+                    <path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5Z"/>
+                </svg>
+                <span>Nachrichten</span>
+                <span class="nav-count">2</span>
+            </a>
+
+            <a class="nav-link"
+               href="personen.html"
+               title="Personen finden">
+                <svg viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.7"
+                     stroke-linecap="round"
+                     stroke-linejoin="round">
+                    <circle cx="9" cy="8" r="3.5"/>
+                    <path d="M2.5 20v-1.5A5.5 5.5 0 0 1 8 13h2a5.5 5.5 0 0 1 5.5 5.5V20M16 5.2a3.5 3.5 0 0 1 0 6.6M18 14a4.5 4.5 0 0 1 3.5 4.4V20"/>
+                </svg>
+                <span>Personen finden</span>
+            </a>
+
+        </nav>
+
+        <div class="side-label" style="margin-top:29px">Konto</div>
+
+        <nav class="nav-list">
+
+            <a class="nav-link"
+               href="profil.html"
+               title="Mein Profil">
+                <svg viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.7"
+                     stroke-linecap="round"
+                     stroke-linejoin="round">
+                    <circle cx="12" cy="8" r="4"/>
+                    <path d="M4 21a8 8 0 0 1 16 0"/>
+                </svg>
+                <span>Mein Profil</span>
+            </a>
+
+            <a class="nav-link"
+               href="einstellungen.html"
+               title="Einstellungen">
+                <svg viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.7"
+                     stroke-linecap="round"
+                     stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.6a7.7 7.7 0 0 1-1.6.9l-.3 1.8h-2.8l-.3-1.8a7.7 7.7 0 0 1-1.6-.9l-1.7.6-1.4-2.4 1.4-1.1a7.3 7.3 0 0 1 0-1.9l-1.4-1.1 1.4-2.4 1.7.6a7.7 7.7 0 0 1 1.6-.9l.3-1.8h2.8l.3 1.8a7.7 7.7 0 0 1 1.6.9l1.7-.6 1.4 2.4-1.4 1.1a7.3 7.3 0 0 1 0 1.8Z"
+                          transform="translate(-1 -1) scale(1.08)"/>
+                </svg>
+                <span>Einstellungen</span>
+            </a>
+
+        </nav>
+
+        <div class="sidebar-spacer"></div>
+
+        <div class="side-bottom">
+            <span>taskflow © 2026</span>
+            <span>v1.0</span>
+        </div>
+    </aside>
+
+    <!-- =========================================
+         14. HAUPTBEREICH
+         Die Karte kommt zuerst.
+         Darunter stehen genau zwei Hauptaktionen.
+         ========================================= -->
+
+    <main class="main">
+        <div class="content-wrap home-map-layout">
+
+            <!-- Interaktive Karte -->
+            <section class="map-panel home-map-panel"
+                     aria-labelledby="nearby-heading">
+
+                <div class="panel-head">
+                    <div>
+                        <h2 id="nearby-heading">
+                            Aufträge in deiner Nähe
+                        </h2>
+
+                        <p>
+                            Wähle eine Markierung aus,
+                            um die Auftragsdetails zu sehen.
+                        </p>
+                    </div>
+
+                    <span class="live-indicator">
+                        Interaktive Karte
+                    </span>
+                </div>
+
+                <!-- Filter für die Kartenmarkierungen -->
+                <div class="map-toolbar"
+                     aria-label="Aufträge auf der Karte filtern">
+
+                    <button class="filter-chip active"
+                            type="button"
+                            data-filter="all">
+                        Alle
+                    </button>
+
+                    <button class="filter-chip"
+                            type="button"
+                            data-filter="garden">
+                        Garten
+                    </button>
+
+                    <button class="filter-chip"
+                            type="button"
+                            data-filter="shopping">
+                        Einkauf
+                    </button>
+
+                    <button class="filter-chip"
+                            type="button"
+                            data-filter="everyday">
+                        Alltagshilfe
+                    </button>
+
+                    <span class="map-filter-spacer"></span>
+
+                    <button class="location-button"
+                            id="locate-button"
+                            type="button">
+                        ◎ Standort nutzen
+                    </button>
+                </div>
+
+                <!-- Leaflet erzeugt hier die interaktive Karte. -->
+                <div id="task-map"
+                     role="region"
+                     aria-label="Interaktive Karte mit Beispielaufträgen">
+                </div>
+
+                <div class="map-foot">
+                    <div class="map-legend">
+                        <span class="legend-item">
+                            <i class="legend-dot"></i>
+                            Offene Beispielaufträge
+                        </span>
+
+                        <span class="legend-item">
+                            <i class="legend-dot brown"></i>
+                            Dein Standort
+                        </span>
+                    </div>
+
+                    <span>OpenStreetMap · Leaflet</span>
+                </div>
+            </section>
+
+            <!-- Die einzigen zwei Hauptbuttons auf der Startseite -->
+            <section class="home-actions"
+                     aria-label="Hauptaktionen">
+
+                <a class="btn btn-primary home-action"
+                   href="auftrag-erstellen.html">
+
+                    <svg viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="2"
+                         stroke-linecap="round">
+                        <path d="M12 5v14M5 12h14"/>
+                    </svg>
+
+                    Neuen Auftrag erstellen
+
+                    <span class="action-arrow" aria-hidden="true">
+                        ↗
+                    </span>
+                </a>
+
+                <a class="btn btn-secondary home-action"
+                   href="aufgaben.html">
+
+                    <svg viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.8"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <circle cx="10.5" cy="10.5" r="6.5"/>
+                        <path d="m16 16 4 4"/>
+                    </svg>
+
+                    Aufträge suchen
+
+                    <span class="action-arrow" aria-hidden="true">
+                        ↗
+                    </span>
+                </a>
+
+            </section>
+        </div>
+    </main>
+
+    <!-- =========================================
+         15. BENACHRICHTIGUNGSFENSTER
+         ========================================= -->
+
+    <aside class="notification-popover"
+           id="notification-popover"
+           aria-label="Benachrichtigungen"
+           aria-live="polite">
+
+        <h3>Benachrichtigungen</h3>
+
+        <div class="notification-row">
+            <span class="notification-mini">
+                <svg viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.8">
+                    <path d="M12 21s8-4.4 8-11a4.5 4.5 0 0 0-8-2.8A4.5 4.5 0 0 0 4 10c0 6.6 8 11 8 11Z"/>
+                </svg>
+            </span>
+
+            <span>
+                <strong>Neue Aufgabe in deiner Nähe</strong><br>
+                Eine Gartenhilfe wurde hinzugefügt.
+                <small>Demo-Mitteilung</small>
+            </span>
+        </div>
+
+        <div class="notification-row">
+            <span class="notification-mini">
+                <svg viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.8">
+                    <path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5Z"/>
+                </svg>
+            </span>
+
+            <span>
+                <strong>Willkommen bei taskflow</strong><br>
+                Entdecke die Möglichkeiten in deiner Nachbarschaft.
+            </span>
+        </div>
+    </aside>
+
+    <!-- =========================================
+         16. AUFTRAGSDETAILS
+         Öffnet sich beim Klick auf eine Markierung.
+         ========================================= -->
+
+    <div class="modal-backdrop"
+         id="task-modal-backdrop"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="modal-title">
+
+        <div class="modal">
+
+            <div class="modal-top">
+                <div class="modal-icon">
+                    <svg viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.8">
+                        <path d="M12 21s8-4.4 8-11a4.5 4.5 0 0 0-8-2.8A4.5 4.5 0 0 0 4 10c0 6.6 8 11 8 11Z"/>
+                    </svg>
+                </div>
+
+                <button class="modal-close"
+                        id="modal-close"
+                        type="button"
+                        aria-label="Fenster schließen">
+                    ×
+                </button>
+            </div>
+
+            <h2 id="modal-title">Aufgabe</h2>
+            <p id="modal-description"></p>
+
+            <div class="modal-details">
+                <div class="detail-tile">
+                    <span>Vergütung</span>
+                    <strong id="modal-price"></strong>
+                </div>
+
+                <div class="detail-tile">
+                    <span>Geschätzte Dauer</span>
+                    <strong id="modal-duration"></strong>
+                </div>
+
+                <div class="detail-tile">
+                    <span>Kategorie</span>
+                    <strong id="modal-category"></strong>
+                </div>
+
+                <div class="detail-tile">
+                    <span>Gebiet</span>
+                    <strong id="modal-area"></strong>
+                </div>
+            </div>
+
+            <p style="font-size:10px">
+                Demo-Auftrag: Es wird keine echte Buchung erstellt.
+            </p>
+
+            <div class="modal-actions">
+                <button class="btn btn-secondary"
+                        id="modal-cancel"
+                        type="button">
+                    Schließen
+                </button>
+
+                <a class="btn btn-primary"
+                   href="aufgaben.html">
+                    Aufgaben ansehen →
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Meldungen erscheinen kurz unten rechts. -->
+    <div class="toast"
+         id="toast"
+         role="status"
+         aria-live="polite">
+        <span class="toast-mark"></span>
+        <span id="toast-message">Aktion</span>
+    </div>
+
+    <!-- Leaflet-JavaScript für die Karte -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        /* =========================================
+           17. HILFSFUNKTIONEN
+           ========================================= */
+
+        // Kurze Schreibweise, um HTML-Elemente zu finden.
+        const $ = (selector, root = document) =>
+            root.querySelector(selector);
+
+        const $$ = (selector, root = document) =>
+            [...root.querySelectorAll(selector)];
+
+        /* =========================================
+           18. KASTANIENBLATT-PIKTOGRAMM
+           Sieben längliche Fiederblättchen fächern
+           sich von einem gemeinsamen Blattstiel auf.
+           ========================================= */
+
+        function chestnutLeafSVG(variant = 0) {
+            const colors = [
+                "#A95D3E",
+                "#81513A",
+                "#C17B4F",
+                "#6D4935"
+            ];
+
+            const color = colors[variant % colors.length];
+
+            return `
+                <svg viewBox="0 0 160 160"
+                     xmlns="http://www.w3.org/2000/svg"
+                     aria-hidden="true">
+
+                    <g fill="${color}"
+                       stroke="#67432F"
+                       stroke-width="1.5"
+                       stroke-linejoin="round">
+
+                        <!-- Linkes äußeres Fiederblättchen -->
+                        <path d="M79 126 L62 108 L48 99 L37 98
+                                 L42 91 L27 89 L35 82 L19 78
+                                 L38 73 L32 63 L48 68 L49 54
+                                 L61 69 L70 61 L73 82 L79 126 Z"/>
+
+                        <!-- Linkes mittleres Fiederblättchen -->
+                        <path d="M79 126 L67 99 L57 78 L55 63
+                                 L62 68 L64 51 L72 60 L77 39
+                                 L82 57 L91 47 L91 68 L100 63
+                                 L94 83 L79 126 Z"/>
+
+                        <!-- Oberes Fiederblättchen -->
+                        <path d="M79 126 L76 86 L72 61 L78 49
+                                 L82 34 L87 49 L95 39 L94 58
+                                 L105 53 L99 70 L108 72 L94 88
+                                 L79 126 Z"/>
+
+                        <!-- Rechtes mittleres Fiederblättchen -->
+                        <path d="M79 126 L89 98 L98 77 L109 65
+                                 L110 78 L124 68 L121 83 L139 82
+                                 L128 94 L140 100 L121 105
+                                 L111 117 L79 126 Z"/>
+
+                        <!-- Rechtes oberes Fiederblättchen -->
+                        <path d="M79 126 L91 95 L104 77 L117 66
+                                 L117 79 L132 73 L126 88 L144 91
+                                 L130 101 L137 111 L116 110
+                                 L104 121 L79 126 Z"/>
+
+                        <!-- Äußeres rechtes Fiederblättchen -->
+                        <path d="M79 126 L99 107 L113 96 L128 94
+                                 L122 104 L140 107 L128 114
+                                 L139 122 L118 122 L108 132
+                                 L79 126 Z"/>
+
+                        <!-- Unteres linkes Fiederblättchen -->
+                        <path d="M79 126 L60 116 L44 112 L31 116
+                                 L35 107 L20 105 L32 98 L18 91
+                                 L39 91 L48 82 L55 99 L67 106
+                                 L79 126 Z"/>
+                    </g>
+
+                    <!-- Mitteladern der Fiederblättchen -->
+                    <g fill="none"
+                       stroke="#E9BE99"
+                       stroke-width="1.5"
+                       stroke-linecap="round"
+                       stroke-linejoin="round"
+                       opacity="0.9">
+
+                        <path d="M80 146 L79 126 L61 108 L40 79"/>
+                        <path d="M79 126 L69 91 L77 49"/>
+                        <path d="M79 126 L88 91 L103 59"/>
+                        <path d="M79 126 L105 105 L132 92"/>
+                        <path d="M79 126 L54 103 L31 99"/>
+                    </g>
+
+                    <!-- Blattstiel -->
+                    <path d="M80 146 Q78 137 79 126"
+                          fill="none"
+                          stroke="#67432F"
+                          stroke-width="3"
+                          stroke-linecap="round"/>
+                </svg>
+            `;
+        }
+
+        // Blätter mit unterschiedlichen Größen und Fallgeschwindigkeiten.
+        const leafField = $("#leaf-field");
+
+        for (let i = 0; i < 11; i++) {
+            const leaf = document.createElement("div");
+
+            leaf.className = "falling-leaf";
+
+            const size = 72 + (i % 4) * 27;
+
+            leaf.style.left = `${(i * 9.7 + 3) % 100}%`;
+            leaf.style.setProperty("--size", `${size}px`);
+            leaf.style.setProperty(
+                "--opacity",
+                `${0.09 + (i % 4) * 0.035}`
+            );
+            leaf.style.setProperty(
+                "--duration",
+                `${19 + (i % 5) * 4}s`
+            );
+            leaf.style.setProperty("--delay", `${-i * 2.6}s`);
+
+            leaf.innerHTML = chestnutLeafSVG(i);
+            leafField.appendChild(leaf);
+        }
+
+        /* =========================================
+           19. KURZE STATUSMELDUNGEN
+           ========================================= */
+
+        let toastTimer;
+
+        function showToast(message) {
+            const toast = $("#toast");
+
+            $("#toast-message").textContent = message;
+            toast.classList.add("show");
+
+            clearTimeout(toastTimer);
+
+            toastTimer = setTimeout(() => {
+                toast.classList.remove("show");
+            }, 3000);
+        }
+
+        /* =========================================
+           20. FUTURISTISCHER KLICKEFFEKT
+           Ein Lichtimpuls entsteht an der Klickposition.
+           ========================================= */
+
+        document.addEventListener("click", event => {
+            const target = event.target.closest(
+                "button, .btn, .nav-link, .brand"
+            );
+
+            if (!target) {
+                return;
+            }
+
+            if (window.matchMedia(
+                "(prefers-reduced-motion: reduce)"
+            ).matches) {
+                return;
+            }
+
+            const ripple = document.createElement("span");
+
+            ripple.className = "click-ripple";
+            ripple.style.left = `${event.clientX}px`;
+            ripple.style.top = `${event.clientY}px`;
+
+            document.body.appendChild(ripple);
+
+            ripple.addEventListener(
+                "animationend",
+                () => ripple.remove(),
+                { once: true }
+            );
+        });
+
+        /* =========================================
+           21. BENACHRICHTIGUNGEN
+           ========================================= */
+
+        const notificationsButton = $("#notifications-button");
+        const notificationPopover = $("#notification-popover");
+
+        notificationsButton.addEventListener("click", () => {
+            const isOpen =
+                notificationPopover.classList.toggle("open");
+
+            notificationsButton.setAttribute(
+                "aria-expanded",
+                String(isOpen)
+            );
+
+            // Beim Öffnen wird der Benachrichtigungspunkt ausgeblendet.
+            $("#notification-dot").hidden = true;
+        });
+
+        // Das Fenster schließt sich bei einem Klick außerhalb.
+        document.addEventListener("click", event => {
+            if (
+                !notificationPopover.contains(event.target) &&
+                !notificationsButton.contains(event.target)
+            ) {
+                notificationPopover.classList.remove("open");
+
+                notificationsButton.setAttribute(
+                    "aria-expanded",
+                    "false"
+                );
+            }
+        });
+
+        /* =========================================
+           22. BEISPIELAUFTRÄGE
+           Die Koordinaten zeigen auf Frankfurt am Main.
+           Das sind Demo-Daten, keine echten Angebote.
+           ========================================= */
+
+        const tasks = [
+            {
+                id: 1,
+                title: "Pflanzen und Garten helfen",
+                category: "garden",
+                categoryName: "Garten",
+                price: "12 €",
+                duration: "20 Minuten",
+                area: "Sachsenhausen",
+                description:
+                    "Beim Gießen und bei kleinen Gartenarbeiten helfen.",
+                lat: 50.0991,
+                lng: 8.6864
+            },
+            {
+                id: 2,
+                title: "Kleinen Einkauf erledigen",
+                category: "shopping",
+                categoryName: "Einkauf",
+                price: "10 €",
+                duration: "30 Minuten",
+                area: "Innenstadt",
+                description:
+                    "Ein paar Lebensmittel aus einem nahegelegenen Geschäft mitbringen.",
+                lat: 50.1147,
+                lng: 8.6795
+            },
+            {
+                id: 3,
+                title: "Hilfe beim Sortieren",
+                category: "everyday",
+                categoryName: "Alltagshilfe",
+                price: "15 €",
+                duration: "45 Minuten",
+                area: "Nordend",
+                description:
+                    "Unterstützung beim Ordnen und Sortieren kleiner Alltagsgegenstände.",
+                lat: 50.1282,
+                lng: 8.6908
+            },
+            {
+                id: 4,
+                title: "Blumenkästen vorbereiten",
+                category: "garden",
+                categoryName: "Garten",
+                price: "14 €",
+                duration: "35 Minuten",
+                area: "Bornheim",
+                description:
+                    "Beim Vorbereiten und Bepflanzen von Blumenkästen mithelfen.",
+                lat: 50.1321,
+                lng: 8.7080
+            },
+            {
+                id: 5,
+                title: "Einkaufstasche mittragen",
+                category: "shopping",
+                categoryName: "Einkauf",
+                price: "8 €",
+                duration: "15 Minuten",
+                area: "Bockenheim",
+                description:
+                    "Bei einem kurzen Weg vom Laden nach Hause unterstützen.",
+                lat: 50.1214,
+                lng: 8.6403
+            },
+            {
+                id: 6,
+                title: "Kleine Alltagshilfe",
+                category: "everyday",
+                categoryName: "Alltagshilfe",
+                price: "11 €",
+                duration: "25 Minuten",
+                area: "Westend",
+                description:
+                    "Bei einer kleinen Aufgabe im Alltag helfen.",
+                lat: 50.1193,
+                lng: 8.6620
+            }
+        ];
+
+        let activeFilter = "all";
+        let searchQuery = "";
+        let map;
+        let markerLayer;
+        let userMarker = null;
+        const markerById = {};
+
+        /* =========================================
+           23. KARTENMARKIERUNGEN
+           ========================================= */
+
+        function makeMarkerIcon() {
+            return L.divIcon({
+                className: "task-marker-wrap",
+
+                html: `
+                    <div style="
+                        width:31px;
+                        height:31px;
+                        border-radius:11px 11px 11px 3px;
+                        transform:rotate(-45deg);
+                        background:#b95f3c;
+                        border:2px solid #fff8ef;
+                        box-shadow:0 5px 15px rgba(88,58,43,.32);
+                        display:grid;
+                        place-items:center;
+                    ">
+                        <span style="
+                            transform:rotate(45deg);
+                            display:block;
+                            width:6px;
+                            height:6px;
+                            border-radius:50%;
+                            background:#fff8ef;
+                        "></span>
+                    </div>
+                `,
+
+                iconSize: [31, 31],
+                iconAnchor: [15, 28],
+                popupAnchor: [0, -27]
+            });
+        }
+
+        /* =========================================
+           24. AUFTRAGSDETAILS ÖFFNEN UND SCHLIESSEN
+           ========================================= */
+
+        function openTaskModal(task) {
+            if (!task) {
+                return;
+            }
+
+            $("#modal-title").textContent = task.title;
+            $("#modal-description").textContent = task.description;
+            $("#modal-price").textContent = task.price;
+            $("#modal-duration").textContent = task.duration;
+            $("#modal-category").textContent = task.categoryName;
+            $("#modal-area").textContent = task.area;
+
+            $("#task-modal-backdrop").classList.add("open");
+            document.body.style.overflow = "hidden";
+        }
+
+        function closeTaskModal() {
+            $("#task-modal-backdrop").classList.remove("open");
+            document.body.style.overflow = "";
+        }
+
+        $("#modal-close").addEventListener(
+            "click",
+            closeTaskModal
+        );
+
+        $("#modal-cancel").addEventListener(
+            "click",
+            closeTaskModal
+        );
+
+        $("#task-modal-backdrop").addEventListener("click", event => {
+            if (event.target === $("#task-modal-backdrop")) {
+                closeTaskModal();
+            }
+        });
+
+        // Escape schließt offene Fenster.
+        document.addEventListener("keydown", event => {
+            if (event.key === "Escape") {
+                closeTaskModal();
+                notificationPopover.classList.remove("open");
+            }
+        });
+
+        /* =========================================
+           25. KARTE INITIALISIEREN
+           ========================================= */
+
+        function initMap() {
+            const mapElement = $("#task-map");
+
+            // Falls Leaflet nicht geladen wurde, erscheint ein Hinweis.
+            if (typeof L === "undefined") {
+                mapElement.innerHTML = `
+                    <div style="
+                        padding:28px;
+                        color:#583a2b;
+                        font-size:13px;
+                        line-height:1.7;
+                    ">
+                        Die interaktive Karte konnte nicht geladen werden.
+                        Bitte prüfe deine Internetverbindung.
+                    </div>
+                `;
+
+                return;
+            }
+
+            // Startposition: Frankfurt am Main.
+            map = L.map(mapElement, {
+                zoomControl: false,
+                scrollWheelZoom: false
+            }).setView([50.115, 8.675], 13);
+
+            // OpenStreetMap liefert Straßen und Kartendaten.
+            L.tileLayer(
+                "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+                    maxZoom: 19,
+                    attribution:
+                        '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'
+                }
+            ).addTo(map);
+
+            L.control.zoom({
+                position: "bottomright"
+            }).addTo(map);
+
+            markerLayer = L.layerGroup().addTo(map);
+
+            // Für jeden Beispielauftrag wird eine Markierung erstellt.
+            tasks.forEach(task => {
+                const marker = L.marker(
+                    [task.lat, task.lng],
+                    {
+                        icon: makeMarkerIcon(),
+                        title: task.title
+                    }
+                );
+
+                marker.on("click", () => {
+                    openTaskModal(task);
+                });
+
+                marker.bindTooltip(
+                    `${task.title} · ${task.price}`,
+                    {
+                        direction: "top",
+                        offset: [0, -18]
+                    }
+                );
+
+                markerById[task.id] = marker;
+            });
+
+            updateMapMarkers();
+
+            // Die Karte wird nach dem Layoutaufbau neu vermessen.
+            setTimeout(() => {
+                map.invalidateSize();
+            }, 150);
+        }
+
+        /* =========================================
+           26. FILTER UND SUCHE
+           ========================================= */
+
+        function updateMapMarkers() {
+            if (!markerLayer) {
+                return;
+            }
+
+            markerLayer.clearLayers();
+
+            // Nur Aufträge anzeigen, die Filter und Suche entsprechen.
+            const filteredTasks = tasks.filter(task => {
+                const categoryMatches =
+                    activeFilter === "all" ||
+                    task.category === activeFilter;
+
+                const searchableText = (
+                    task.title + " " +
+                    task.categoryName + " " +
+                    task.area + " " +
+                    task.description
+                ).toLocaleLowerCase("de-DE");
+
+                const searchMatches =
+                    searchableText.includes(searchQuery);
+
+                return categoryMatches && searchMatches;
+            });
+
+            filteredTasks.forEach(task => {
+                markerLayer.addLayer(markerById[task.id]);
+            });
+        }
+
+        // Klick auf einen Filter aktualisiert die Karte.
+        $$(".filter-chip").forEach(chip => {
+            chip.addEventListener("click", () => {
+                $$(".filter-chip").forEach(item => {
+                    item.classList.remove("active");
+                });
+
+                chip.classList.add("active");
+                activeFilter = chip.dataset.filter;
+
+                updateMapMarkers();
+
+                showToast(
+                    activeFilter === "all"
+                        ? "Alle Kategorien ausgewählt."
+                        : `Filter aktiv: ${chip.textContent.trim()}.`
+                );
+            });
+        });
+
+        // Das Suchfeld filtert die Markierungen direkt beim Tippen.
+        $("#global-search").addEventListener("input", event => {
+            searchQuery = event.target.value
+                .trim()
+                .toLocaleLowerCase("de-DE");
+
+            updateMapMarkers();
+
+            const visibleTasks = tasks.filter(task => {
+                const categoryMatches =
+                    activeFilter === "all" ||
+                    task.category === activeFilter;
+
+                const searchableText = (
+                    task.title + " " +
+                    task.categoryName + " " +
+                    task.area + " " +
+                    task.description
+                ).toLocaleLowerCase("de-DE");
+
+                return categoryMatches &&
+                    searchableText.includes(searchQuery);
+            });
+
+            // Bei genau einem Treffer auf die Markierung zoomen.
+            if (map && visibleTasks.length === 1) {
+                map.flyTo(
+                    [visibleTasks[0].lat, visibleTasks[0].lng],
+                    15,
+                    { duration: 0.6 }
+                );
+            }
+
+            if (searchQuery && visibleTasks.length === 0) {
+                showToast(
+                    "Keine passenden Beispielaufträge gefunden."
+                );
+            }
+        });
+
+        /* =========================================
+           27. STANDORT FREIGEBEN
+           Die Position wird nur nach einem Klick abgefragt.
+           ========================================= */
+
+        $("#locate-button").addEventListener("click", () => {
+            if (!navigator.geolocation) {
+                showToast(
+                    "Dein Browser unterstützt keine Standortfreigabe."
+                );
+
+                return;
+            }
+
+            $("#locate-button").textContent =
+                "Standort wird gesucht …";
+
+            navigator.geolocation.getCurrentPosition(
+                position => {
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+
+                    if (map) {
+                        // Alte Standortmarkierung entfernen.
+                        if (userMarker) {
+                            map.removeLayer(userMarker);
+                        }
+
+                        // Neue Standortmarkierung einzeichnen.
+                        userMarker = L.circleMarker(
+                            [latitude, longitude],
+                            {
+                                radius: 8,
+                                color: "#fffaf2",
+                                weight: 3,
+                                fillColor: "#583a2b",
+                                fillOpacity: 1
+                            }
+                        ).addTo(map);
+
+                        userMarker.bindPopup(
+                            "Dein ungefährer Standort"
+                        );
+
+                        map.flyTo(
+                            [latitude, longitude],
+                            14,
+                            { duration: 0.9 }
+                        );
+                    }
+
+                    $("#locate-button").textContent =
+                        "◎ Standort aktualisiert";
+
+                    showToast(
+                        "Dein Standort wurde für diese Kartenansicht verwendet."
+                    );
+                },
+
+                error => {
+                    $("#locate-button").textContent =
+                        "◎ Standort nutzen";
+
+                    const message = error.code === 1
+                        ? "Standortfreigabe wurde nicht erlaubt."
+                        : "Standort konnte nicht ermittelt werden.";
+
+                    showToast(
+                        `${message} Du kannst die Karte weiterhin ohne Standort nutzen.`
+                    );
+                },
+
+                {
+                    enableHighAccuracy: false,
+                    timeout: 9000,
+                    maximumAge: 60000
+                }
+            );
+        });
+
+        /* =========================================
+           28. SIGN-IN UND START
+           ========================================= */
+
+        $("#signin-button").addEventListener("click", () => {
+            showToast(
+                "Die Anmeldung wird später mit einem sicheren Backend verbunden."
+            );
+        });
+
+        // Karte und Markierungen laden.
+        initMap();
+
+        // Leaflet muss nach einer Fenstergrößenänderung
+        // die Kartengröße erneut berechnen.
+        window.addEventListener("resize", () => {
+            if (map) {
+                map.invalidateSize();
+            }
+        });
+    </script>
+</body>
+</html>
