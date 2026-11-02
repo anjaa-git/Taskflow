@@ -1,0 +1,1320 @@
+
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Mein Profil – Taskflow</title>
+
+    <style>
+
+        /* =========================================
+           1. GRUNDEINSTELLUNGEN
+        ========================================= */
+
+        * {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --hintergrund: #F6EFE5;
+            --weiss: #FFFCF6;
+            --braun: #583A2B;
+            --dunkel: #2A201B;
+            --rost: #B95F3C;
+            --hellbraun: #F0DFCF;
+            --grau: #88776B;
+            --linie: #E7D9C9;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--hintergrund);
+            color: var(--dunkel);
+        }
+
+
+        /* =========================================
+           2. KOPFZEILE
+        ========================================= */
+
+        header {
+            height: 72px;
+            background: var(--weiss);
+            border-bottom: 1px solid var(--linie);
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            padding: 0 30px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            color: var(--braun);
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        /* Chatblasen als Taskflow-Logo */
+        .logo-icon {
+            position: relative;
+            width: 34px;
+            height: 30px;
+        }
+
+        .blase {
+            position: absolute;
+            width: 23px;
+            height: 17px;
+            border-radius: 7px;
+        }
+
+        .blase.eins {
+            background: var(--rost);
+            top: 0;
+            left: 0;
+        }
+
+        .blase.zwei {
+            background: var(--braun);
+            bottom: 0;
+            right: 0;
+            border: 2px solid var(--weiss);
+        }
+
+        .kopf-rechts {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .suche-kopf {
+            width: 210px;
+            padding: 10px 14px;
+            border: 1px solid var(--linie);
+            border-radius: 20px;
+            background: var(--weiss);
+        }
+
+        .benachrichtigung {
+            border: none;
+            background: transparent;
+            color: var(--braun);
+            font-size: 21px;
+            cursor: pointer;
+        }
+
+        .anmelden {
+            background: var(--braun);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 11px 18px;
+            cursor: pointer;
+        }
+
+
+        /* =========================================
+           3. SEITENAUFTEILUNG
+        ========================================= */
+
+        .layout {
+            display: flex;
+            min-height: calc(100vh - 72px);
+        }
+
+
+        /* =========================================
+           4. LINKE NAVIGATION
+        ========================================= */
+
+        nav {
+            width: 220px;
+            flex-shrink: 0;
+
+            background: var(--weiss);
+            border-right: 1px solid var(--linie);
+
+            padding: 25px 14px;
+        }
+
+        nav a {
+            display: block;
+            padding: 13px 15px;
+            margin-bottom: 7px;
+
+            color: var(--braun);
+            text-decoration: none;
+            border-radius: 12px;
+
+            transition: background 0.2s;
+        }
+
+        nav a:hover,
+        nav a.aktiv {
+            background: var(--hellbraun);
+        }
+
+        nav a.aktiv {
+            font-weight: bold;
+        }
+
+
+        /* =========================================
+           5. HAUPTBEREICH
+        ========================================= */
+
+        main {
+            flex: 1;
+            min-width: 0;
+            padding: 30px;
+        }
+
+        .seitenkopf {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .seitenkopf h1 {
+            margin: 0 0 7px;
+            font-size: 28px;
+        }
+
+        .seitenkopf p {
+            margin: 0;
+            color: var(--grau);
+        }
+
+        /* Allgemeine Karten */
+        .karte {
+            background: var(--weiss);
+            border: 1px solid var(--linie);
+            border-radius: 18px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .karte h2 {
+            color: var(--braun);
+            font-size: 19px;
+            margin: 0 0 18px;
+        }
+
+
+        /* =========================================
+           6. PROFILKOPF
+        ========================================= */
+
+        .profil-kopf {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+            flex-wrap: wrap;
+        }
+
+        /* Profilbild */
+        .profilbild {
+            width: 105px;
+            height: 105px;
+            min-width: 105px;
+
+            border-radius: 50%;
+            background: #E5C8AD;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            color: var(--braun);
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .profil-infos {
+            flex: 1;
+        }
+
+        .profil-infos h2 {
+            margin: 0 0 7px;
+            font-size: 25px;
+            color: var(--dunkel);
+        }
+
+        .profil-infos p {
+            margin: 5px 0;
+            color: var(--grau);
+        }
+
+        .profil-status {
+            display: inline-block;
+            background: var(--hellbraun);
+            color: var(--braun);
+            padding: 7px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+
+
+        /* =========================================
+           7. PROFIL-INHALT IN ZWEI SPALTEN
+        ========================================= */
+
+        .profil-raster {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        .profil-spalte {
+            min-width: 0;
+        }
+
+
+        /* =========================================
+           8. PERSÖNLICHE INFORMATIONEN
+        ========================================= */
+
+        .info-zeile {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+
+            padding: 12px 0;
+            border-bottom: 1px solid #F0E6DB;
+        }
+
+        .info-zeile:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: var(--grau);
+        }
+
+        .info-wert {
+            font-weight: bold;
+            text-align: right;
+        }
+
+
+        /* =========================================
+           9. FÄHIGKEITEN
+        ========================================= */
+
+        .faehigkeiten {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .faehigkeit {
+            background: var(--hellbraun);
+            color: var(--braun);
+
+            padding: 9px 13px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+
+        /* =========================================
+           10. VERFÜGBARKEIT
+        ========================================= */
+
+        .tag-zeile {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            padding: 11px 0;
+            border-bottom: 1px solid #F0E6DB;
+        }
+
+        .tag-zeile:last-child {
+            border-bottom: none;
+        }
+
+        .verfuegbar {
+            color: var(--braun);
+            background: var(--hellbraun);
+            padding: 6px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+        }
+
+        .nicht-verfuegbar {
+            color: var(--grau);
+            background: #F3EEE8;
+            padding: 6px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+        }
+
+
+        /* =========================================
+           11. BEWERTUNGEN
+        ========================================= */
+
+        .bewertung-kopf {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .bewertung-zahl {
+            font-size: 35px;
+            font-weight: bold;
+            color: var(--braun);
+        }
+
+        .sterne {
+            color: #C18B45;
+            letter-spacing: 2px;
+            font-size: 20px;
+        }
+
+        .bewertung {
+            border-top: 1px solid #F0E6DB;
+            padding: 15px 0;
+        }
+
+        .bewertung strong {
+            color: var(--braun);
+        }
+
+        .bewertung p {
+            color: var(--grau);
+            line-height: 1.5;
+            margin-bottom: 0;
+        }
+
+
+        /* =========================================
+           12. SCHALTFLÄCHEN
+        ========================================= */
+
+        button {
+            font-family: inherit;
+        }
+
+        .primaer {
+            background: var(--rost);
+            color: white;
+            border: none;
+            border-radius: 11px;
+            padding: 12px 18px;
+            cursor: pointer;
+        }
+
+        .primaer:hover {
+            background: #96482D;
+        }
+
+        .sekundaer {
+            background: var(--hellbraun);
+            color: var(--braun);
+            border: none;
+            border-radius: 11px;
+            padding: 11px 16px;
+            cursor: pointer;
+        }
+
+        .sekundaer:hover {
+            background: #E4CDB8;
+        }
+
+
+        /* =========================================
+           13. BEARBEITUNGSFORMULAR
+        ========================================= */
+
+        .formular {
+            display: none;
+        }
+
+        .formular.anzeigen {
+            display: block;
+        }
+
+        .formular-raster {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .formular-gruppe {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .formular-gruppe.voll {
+            grid-column: 1 / -1;
+        }
+
+        .formular label {
+            color: var(--braun);
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .formular input,
+        .formular textarea,
+        .formular select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--linie);
+            border-radius: 10px;
+            background: var(--weiss);
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+        }
+
+        .formular textarea {
+            min-height: 90px;
+            resize: vertical;
+        }
+
+        .formular input:focus,
+        .formular textarea:focus,
+        .formular select:focus {
+            outline: none;
+            border-color: var(--rost);
+        }
+
+        .formular-aktionen {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+
+        /* =========================================
+           14. RESPONSIVES DESIGN
+        ========================================= */
+
+        @media (max-width: 950px) {
+
+            .profil-raster {
+                grid-template-columns: 1fr;
+            }
+
+            nav {
+                width: 180px;
+            }
+
+            .suche-kopf {
+                display: none;
+            }
+        }
+
+        @media (max-width: 650px) {
+
+            .layout {
+                flex-direction: column;
+            }
+
+            nav {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--linie);
+                padding: 10px;
+            }
+
+            nav a {
+                display: inline-block;
+                margin-bottom: 0;
+            }
+
+            main {
+                padding: 18px 14px;
+            }
+
+            .seitenkopf {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .profil-kopf {
+                align-items: flex-start;
+            }
+
+            .formular-raster {
+                grid-template-columns: 1fr;
+            }
+
+            .formular-gruppe.voll {
+                grid-column: auto;
+            }
+
+            header {
+                padding: 0 15px;
+            }
+        }
+
+    </style>
+</head>
+
+
+<body>
+
+
+    <!-- =========================================
+         KOPFZEILE
+    ========================================= -->
+
+    <header>
+
+        <div class="logo">
+
+            <div class="logo-icon">
+                <div class="blase eins"></div>
+                <div class="blase zwei"></div>
+            </div>
+
+            Taskflow
+
+        </div>
+
+        <div class="kopf-rechts">
+
+            <input
+                class="suche-kopf"
+                type="text"
+                placeholder="Personen suchen..."
+            >
+
+            <button class="benachrichtigung"
+                    title="Benachrichtigungen">
+                ♧
+            </button>
+
+            <button class="anmelden">
+                Anmelden
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <!-- =========================================
+         SEITENAUFTEILUNG
+    ========================================= -->
+
+    <div class="layout">
+
+
+        <!-- =====================================
+             LINKE NAVIGATION
+        ===================================== -->
+
+        <nav>
+
+            <a href="index.html">Startseite</a>
+
+            <a href="aufgaben.html">Aufträge suchen</a>
+
+            <a href="auftrag-erstellen.html">Neuen Auftrag erstellen</a>
+
+            <a href="meine-auftraege.html">Meine Aufträge</a>
+
+            <a href="nachrichten.html">Nachrichten</a>
+
+            <a href="profil.html" class="aktiv">Mein Profil</a>
+
+        </nav>
+
+
+        <!-- =====================================
+             HAUPTBEREICH
+        ===================================== -->
+
+        <main>
+
+
+            <!-- Seitenüberschrift -->
+            <div class="seitenkopf">
+
+                <div>
+                    <h1>Mein Profil</h1>
+
+                    <p>
+                        Stelle dich anderen Nutzern vor und zeige,
+                        wobei du helfen kannst.
+                    </p>
+                </div>
+
+                <button class="primaer" onclick="formularOeffnen()">
+                    Profil bearbeiten
+                </button>
+
+            </div>
+
+
+            <!-- =================================
+                 PROFILKOPF
+            ================================= -->
+
+            <section class="karte">
+
+                <div class="profil-kopf">
+
+                    <!-- Platzhalter für Profilbild -->
+                    <div class="profilbild" id="profilInitialen">
+                        AM
+                    </div>
+
+                    <div class="profil-infos">
+
+                        <h2 id="profilName">
+                            Alex Müller
+                        </h2>
+
+                        <p id="profilOrt">
+                            Mörfelden-Walldorf
+                        </p>
+
+                        <p id="profilBeschreibung">
+                            Ich helfe gerne bei alltäglichen Aufgaben
+                            und bin zuverlässig und flexibel.
+                        </p>
+
+                        <span class="profil-status">
+                            Taskflow-Mitglied
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =================================
+                 BEARBEITUNGSFORMULAR
+            ================================= -->
+
+            <section class="karte formular" id="bearbeiten">
+
+                <h2>Profil bearbeiten</h2>
+
+                <div class="formular-raster">
+
+                    <div class="formular-gruppe">
+
+                        <label for="nameEingabe">
+                            Name
+                        </label>
+
+                        <input
+                            type="text"
+                            id="nameEingabe"
+                            value="Alex Müller"
+                        >
+
+                    </div>
+
+
+                    <div class="formular-gruppe">
+
+                        <label for="ortEingabe">
+                            Wohnort
+                        </label>
+
+                        <input
+                            type="text"
+                            id="ortEingabe"
+                            value="Mörfelden-Walldorf"
+                        >
+
+                    </div>
+
+
+                    <div class="formular-gruppe voll">
+
+                        <label for="beschreibungEingabe">
+                            Über mich
+                        </label>
+
+                        <textarea id="beschreibungEingabe">Ich helfe gerne bei alltäglichen Aufgaben und bin zuverlässig und flexibel.</textarea>
+
+                    </div>
+
+
+                    <div class="formular-gruppe voll">
+
+                        <label for="faehigkeitenEingabe">
+                            Meine Fähigkeiten
+                        </label>
+
+                        <input
+                            type="text"
+                            id="faehigkeitenEingabe"
+                            value="Einkaufen, Gartenarbeit, Technik"
+                        >
+
+                        <small>
+                            Trenne mehrere Fähigkeiten mit Kommas.
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <div class="formular-aktionen">
+
+                    <button class="primaer" onclick="profilSpeichern()">
+                        Änderungen speichern
+                    </button>
+
+                    <button class="sekundaer" onclick="formularSchliessen()">
+                        Abbrechen
+                    </button>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =================================
+                 PROFILINHALT
+            ================================= -->
+
+            <div class="profil-raster">
+
+
+                <!-- =================================
+                     LINKE SPALTE
+                ================================= -->
+
+                <div class="profil-spalte">
+
+
+                    <!-- Persönliche Informationen -->
+                    <section class="karte">
+
+                        <h2>Persönliche Informationen</h2>
+
+                        <div class="info-zeile">
+
+                            <span class="info-label">
+                                Name
+                            </span>
+
+                            <span class="info-wert" id="infoName">
+                                Alex Müller
+                            </span>
+
+                        </div>
+
+                        <div class="info-zeile">
+
+                            <span class="info-label">
+                                Wohnort
+                            </span>
+
+                            <span class="info-wert" id="infoOrt">
+                                Mörfelden-Walldorf
+                            </span>
+
+                        </div>
+
+                        <div class="info-zeile">
+
+                            <span class="info-label">
+                                Mitglied seit
+                            </span>
+
+                            <span class="info-wert">
+                                Oktober 2026
+                            </span>
+
+                        </div>
+
+                    </section>
+
+
+
+                    <!-- Fähigkeiten -->
+                    <section class="karte">
+
+                        <h2>Meine Fähigkeiten</h2>
+
+                        <div class="faehigkeiten" id="faehigkeitenListe">
+
+                            <span class="faehigkeit">
+                                Einkaufen
+                            </span>
+
+                            <span class="faehigkeit">
+                                Gartenarbeit
+                            </span>
+
+                            <span class="faehigkeit">
+                                Technik
+                            </span>
+
+                        </div>
+
+                    </section>
+
+
+
+                    <!-- Bewertungen -->
+                    <section class="karte">
+
+                        <h2>Bewertungen</h2>
+
+                        <div class="bewertung-kopf">
+
+                            <div class="bewertung-zahl">
+                                4,8
+                            </div>
+
+                            <div>
+
+                                <div class="sterne">
+                                    ★★★★★
+                                </div>
+
+                                <div class="info-label">
+                                    Durchschnittliche Bewertung
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="bewertung">
+
+                            <strong>Lisa M.</strong>
+
+                            <div class="sterne">
+                                ★★★★★
+                            </div>
+
+                            <p>
+                                Sehr freundlich und zuverlässig.
+                                Die Aufgabe wurde schnell erledigt.
+                            </p>
+
+                        </div>
+
+
+                        <div class="bewertung">
+
+                            <strong>Max S.</strong>
+
+                            <div class="sterne">
+                                ★★★★☆
+                            </div>
+
+                            <p>
+                                Gute Kommunikation und angenehme Zusammenarbeit.
+                            </p>
+
+                        </div>
+
+                    </section>
+
+                </div>
+
+
+
+                <!-- =================================
+                     RECHTE SPALTE
+                ================================= -->
+
+                <div class="profil-spalte">
+
+
+                    <!-- Verfügbarkeit -->
+                    <section class="karte">
+
+                        <h2>Meine Verfügbarkeit</h2>
+
+                        <div class="tag-zeile">
+
+                            <span>Montag</span>
+
+                            <span class="verfuegbar">
+                                Nachmittags
+                            </span>
+
+                        </div>
+
+                        <div class="tag-zeile">
+
+                            <span>Dienstag</span>
+
+                            <span class="nicht-verfuegbar">
+                                Nicht verfügbar
+                            </span>
+
+                        </div>
+
+                        <div class="tag-zeile">
+
+                            <span>Mittwoch</span>
+
+                            <span class="verfuegbar">
+                                Nachmittags
+                            </span>
+
+                        </div>
+
+                        <div class="tag-zeile">
+
+                            <span>Donnerstag</span>
+
+                            <span class="verfuegbar">
+                                Abends
+                            </span>
+
+                        </div>
+
+                        <div class="tag-zeile">
+
+                            <span>Freitag</span>
+
+                            <span class="verfuegbar">
+                                Nachmittags
+                            </span>
+
+                        </div>
+
+                        <div class="tag-zeile">
+
+                            <span>Wochenende</span>
+
+                            <span class="verfuegbar">
+                                Nach Absprache
+                            </span>
+
+                        </div>
+
+                    </section>
+
+
+
+                    <!-- Aktivität -->
+                    <section class="karte">
+
+                        <h2>Meine Aktivitäten</h2>
+
+                        <div class="info-zeile">
+
+                            <span class="info-label">
+                                Erstellte Aufträge
+                            </span>
+
+                            <span class="info-wert">
+                                4
+                            </span>
+
+                        </div>
+
+                        <div class="info-zeile">
+
+                            <span class="info-label">
+                                Übernommene Aufträge
+                            </span>
+
+                            <span class="info-wert">
+                                7
+                            </span>
+
+                        </div>
+
+                        <div class="info-zeile">
+
+                            <span class="info-label">
+                                Abgeschlossene Aufgaben
+                            </span>
+
+                            <span class="info-wert">
+                                9
+                            </span>
+
+                        </div>
+
+                    </section>
+
+                </div>
+
+            </div>
+
+        </main>
+
+    </div>
+
+
+
+    <!-- =========================================
+         JAVASCRIPT
+    ========================================= -->
+
+    <script>
+
+
+        /* =========================================
+           1. BEARBEITUNGSFORMULAR ÖFFNEN
+        ========================================= */
+
+        function formularOeffnen() {
+
+            const formular = document.getElementById("bearbeiten");
+
+            // Formular sichtbar machen
+            formular.classList.add("anzeigen");
+
+            // Zum Formular scrollen
+            formular.scrollIntoView({
+                behavior: "smooth",
+                block: "center"
+            });
+
+        }
+
+
+
+        /* =========================================
+           2. FORMULAR SCHLIESSEN
+        ========================================= */
+
+        function formularSchliessen() {
+
+            const formular = document.getElementById("bearbeiten");
+
+            formular.classList.remove("anzeigen");
+
+        }
+
+
+
+        /* =========================================
+           3. PROFIL SPEICHERN
+        ========================================= */
+
+        function profilSpeichern() {
+
+            // Werte aus den Eingabefeldern auslesen
+            const name = document
+                .getElementById("nameEingabe")
+                .value.trim();
+
+            const ort = document
+                .getElementById("ortEingabe")
+                .value.trim();
+
+            const beschreibung = document
+                .getElementById("beschreibungEingabe")
+                .value.trim();
+
+            const faehigkeiten = document
+                .getElementById("faehigkeitenEingabe")
+                .value;
+
+
+            // Prüfen, ob Name und Wohnort angegeben wurden
+            if (name === "" || ort === "") {
+
+                alert("Bitte gib mindestens deinen Namen und Wohnort ein.");
+
+                return;
+
+            }
+
+
+            // Neue Angaben im Profil anzeigen
+            document.getElementById("profilName").innerText = name;
+
+            document.getElementById("profilOrt").innerText = ort;
+
+            document.getElementById("profilBeschreibung").innerText =
+                beschreibung;
+
+            document.getElementById("infoName").innerText = name;
+
+            document.getElementById("infoOrt").innerText = ort;
+
+
+            // Initialen aus dem Namen erstellen
+            const namenTeile = name.split(" ");
+
+            const initialen = namenTeile
+                .map(teil => teil.charAt(0))
+                .join("")
+                .substring(0, 2)
+                .toUpperCase();
+
+            document.getElementById("profilInitialen").innerText =
+                initialen;
+
+
+            // Fähigkeiten in einzelne Begriffe aufteilen
+            const faehigkeitenArray = faehigkeiten
+                .split(",")
+                .map(f => f.trim())
+                .filter(f => f !== "");
+
+
+            // Vorhandene Fähigkeiten entfernen
+            const liste = document.getElementById("faehigkeitenListe");
+
+            liste.innerHTML = "";
+
+
+            // Für jede Fähigkeit ein neues Element erstellen
+            faehigkeitenArray.forEach(function(faehigkeit) {
+
+                const element = document.createElement("span");
+
+                element.classList.add("faehigkeit");
+
+                element.textContent = faehigkeit;
+
+                liste.appendChild(element);
+
+            });
+
+
+            // Profilinformationen als Objekt zusammenfassen
+            const profilDaten = {
+                name: name,
+                ort: ort,
+                beschreibung: beschreibung,
+                faehigkeiten: faehigkeitenArray
+            };
+
+
+            // Daten im Browser speichern
+            localStorage.setItem(
+                "taskflowProfil",
+                JSON.stringify(profilDaten)
+            );
+
+
+            // Rückmeldung anzeigen
+            alert("Dein Profil wurde gespeichert.");
+
+            formularSchliessen();
+
+        }
+
+
+
+        /* =========================================
+           4. GESPEICHERTES PROFIL LADEN
+        ========================================= */
+
+        function profilLaden() {
+
+            // Gespeicherte Daten aus dem Browser auslesen
+            const gespeicherteDaten =
+                localStorage.getItem("taskflowProfil");
+
+
+            // Wenn keine Daten existieren, Standardprofil verwenden
+            if (!gespeicherteDaten) {
+
+                return;
+
+            }
+
+
+            // JSON-Text wieder in ein JavaScript-Objekt umwandeln
+            const profil = JSON.parse(gespeicherteDaten);
+
+
+            // Daten in die sichtbaren Profilbereiche einsetzen
+            document.getElementById("profilName").innerText =
+                profil.name;
+
+            document.getElementById("profilOrt").innerText =
+                profil.ort;
+
+            document.getElementById("profilBeschreibung").innerText =
+                profil.beschreibung;
+
+            document.getElementById("infoName").innerText =
+                profil.name;
+
+            document.getElementById("infoOrt").innerText =
+                profil.ort;
+
+
+            // Initialen erneut berechnen
+            const namenTeile = profil.name.split(" ");
+
+            const initialen = namenTeile
+                .map(teil => teil.charAt(0))
+                .join("")
+                .substring(0, 2)
+                .toUpperCase();
+
+            document.getElementById("profilInitialen").innerText =
+                initialen;
+
+
+            // Fähigkeiten im Profil aktualisieren
+            const liste = document.getElementById("faehigkeitenListe");
+
+            liste.innerHTML = "";
+
+            profil.faehigkeiten.forEach(function(faehigkeit) {
+
+                const element = document.createElement("span");
+
+                element.classList.add("faehigkeit");
+
+                element.textContent = faehigkeit;
+
+                liste.appendChild(element);
+
+            });
+
+
+            // Gespeicherte Werte auch in das Formular einsetzen
+            document.getElementById("nameEingabe").value =
+                profil.name;
+
+            document.getElementById("ortEingabe").value =
+                profil.ort;
+
+            document.getElementById("beschreibungEingabe").value =
+                profil.beschreibung;
+
+            document.getElementById("faehigkeitenEingabe").value =
+                profil.faehigkeiten.join(", ");
+
+        }
+
+
+        // Beim Öffnen der Seite gespeicherte Daten laden
+        profilLaden();
+
+
+    </script>
+
+</body>
+</html>
