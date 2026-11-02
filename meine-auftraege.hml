@@ -1,0 +1,346 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meine Aufträge – Taskflow</title>
+
+    <style>
+        /* Grundlegende Seiteneinstellungen */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #F6EFE5;
+            color: #2A201B;
+        }
+
+        /* Kopfzeile */
+        header {
+            background: #FFFCF6;
+            padding: 18px 30px;
+            border-bottom: 1px solid #E7D9C9;
+        }
+
+        header h1 {
+            margin: 0;
+            color: #583A2B;
+            font-size: 25px;
+        }
+
+        /* Aufteilung der Seite */
+        .layout {
+            display: flex;
+            min-height: calc(100vh - 65px);
+        }
+
+        /* Linke Navigationsleiste */
+        nav {
+            width: 220px;
+            flex-shrink: 0;
+            background: #FFFCF6;
+            padding: 24px 14px;
+            border-right: 1px solid #E7D9C9;
+        }
+
+        nav a {
+            display: block;
+            padding: 13px 15px;
+            margin-bottom: 7px;
+            color: #583A2B;
+            text-decoration: none;
+            border-radius: 12px;
+        }
+
+        nav a:hover,
+        nav a.aktiv {
+            background: #F0DFCF;
+        }
+
+        /* Hauptbereich */
+        main {
+            flex: 1;
+            min-width: 0;
+            padding: 30px;
+        }
+
+        .seitenkopf h2 {
+            margin: 0 0 8px;
+            font-size: 28px;
+        }
+
+        .seitenkopf p {
+            color: #88776B;
+            margin-top: 0;
+        }
+
+        /* Auswahl zwischen eigenen und übernommenen Aufträgen */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 25px 0;
+        }
+
+        .tabs button {
+            background: #EADBCB;
+            color: #583A2B;
+        }
+
+        .tabs button.aktiv {
+            background: #B95F3C;
+            color: white;
+        }
+
+        /* Auftragskarten */
+        .auftragsliste {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 18px;
+        }
+
+        .auftrag {
+            background: #FFFCF6;
+            border: 1px solid #E7D9C9;
+            border-radius: 18px;
+            padding: 22px;
+        }
+
+        .auftrag h3 {
+            color: #583A2B;
+            margin-top: 0;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 6px 11px;
+            border-radius: 20px;
+            background: #F0DFCF;
+            color: #583A2B;
+            font-size: 13px;
+        }
+
+        .details {
+            color: #88776B;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .preis {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 18px 0;
+        }
+
+        /* Schaltflächen */
+        button {
+            border: none;
+            border-radius: 12px;
+            padding: 12px 16px;
+            background: #B95F3C;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #96482D;
+        }
+
+        .sekundaer {
+            background: #EADBCB;
+            color: #583A2B;
+        }
+
+        .sekundaer:hover {
+            background: #DCC6B1;
+        }
+
+        .kartenaktionen {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .leer {
+            background: #FFFCF6;
+            padding: 25px;
+            border-radius: 16px;
+            color: #88776B;
+        }
+
+        /* Kleine Bildschirme */
+        @media (max-width: 700px) {
+            .layout {
+                flex-direction: column;
+            }
+
+            nav {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #E7D9C9;
+                padding: 12px;
+            }
+
+            nav a {
+                display: inline-block;
+            }
+
+            main {
+                padding: 20px 14px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Kopfzeile -->
+    <header>
+        <h1>Taskflow</h1>
+    </header>
+
+    <div class="layout">
+
+        <!-- Linke Navigation -->
+        <nav>
+            <a href="index.html">Startseite</a>
+            <a href="aufgaben.html">Aufträge suchen</a>
+            <a href="auftrag-erstellen.html">Neuen Auftrag erstellen</a>
+            <a href="meine-auftraege.html" class="aktiv">Meine Aufträge</a>
+            <a href="nachrichten.html">Nachrichten</a>
+            <a href="profil.html">Mein Profil</a>
+        </nav>
+
+        <!-- Hauptinhalt -->
+        <main>
+
+            <div class="seitenkopf">
+                <h2>Meine Aufträge</h2>
+                <p>Behalte den Überblick über deine erstellten und übernommenen Aufgaben.</p>
+            </div>
+
+            <!-- Umschalten zwischen den Auftragsarten -->
+            <div class="tabs">
+                <button class="aktiv" onclick="bereichWechseln('erstellt', this)">
+                    Erstellte Aufträge
+                </button>
+
+                <button onclick="bereichWechseln('uebernommen', this)">
+                    Übernommene Aufträge
+                </button>
+            </div>
+
+            <!-- Bereich für selbst erstellte Aufträge -->
+            <section id="erstellt" class="auftragsliste">
+
+                <article class="auftrag">
+                    <span class="status">Offen</span>
+                    <h3>Gartenhilfe gesucht</h3>
+                    <p>Unterstützung bei kleinen Gartenarbeiten.</p>
+                    <p class="details">
+                        Kategorie: Garten<br>
+                        Dauer: ca. 60 Minuten<br>
+                        Termin: Noch nicht vereinbart
+                    </p>
+                    <p class="preis">15 €</p>
+
+                    <div class="kartenaktionen">
+                        <button onclick="auftragMelden('Gartenhilfe gesucht')">
+                            Verwalten
+                        </button>
+                        <button class="sekundaer"
+                            onclick="auftragEntfernen(this)">
+                            Entfernen
+                        </button>
+                    </div>
+                </article>
+
+                <article class="auftrag">
+                    <span class="status">In Bearbeitung</span>
+                    <h3>Einkaufshilfe</h3>
+                    <p>Hilfe beim Einkauf von Lebensmitteln.</p>
+                    <p class="details">
+                        Kategorie: Einkaufen<br>
+                        Dauer: ca. 30 Minuten<br>
+                        Termin: 05.11.2026
+                    </p>
+                    <p class="preis">10 €</p>
+
+                    <div class="kartenaktionen">
+                        <button onclick="auftragMelden('Einkaufshilfe')">
+                            Verwalten
+                        </button>
+                    </div>
+                </article>
+
+            </section>
+
+            <!-- Bereich für übernommene Aufträge -->
+            <section id="uebernommen" class="auftragsliste" hidden>
+
+                <article class="auftrag">
+                    <span class="status">Bestätigt</span>
+                    <h3>Computerhilfe</h3>
+                    <p>Unterstützung bei einer einfachen Computereinstellung.</p>
+                    <p class="details">
+                        Kategorie: Technik<br>
+                        Dauer: ca. 45 Minuten<br>
+                        Termin: 06.11.2026
+                    </p>
+                    <p class="preis">12 €</p>
+
+                    <div class="kartenaktionen">
+                        <button onclick="auftragMelden('Computerhilfe')">
+                            Details ansehen
+                        </button>
+                    </div>
+                </article>
+
+            </section>
+
+        </main>
+    </div>
+
+    <script>
+        // Wechselt zwischen erstellten und übernommenen Aufträgen
+        function bereichWechseln(bereich, button) {
+
+            document.getElementById("erstellt").hidden =
+                bereich !== "erstellt";
+
+            document.getElementById("uebernommen").hidden =
+                bereich !== "uebernommen";
+
+            // Aktiven Tab optisch hervorheben
+            document.querySelectorAll(".tabs button").forEach(function(tab) {
+                tab.classList.remove("aktiv");
+            });
+
+            button.classList.add("aktiv");
+        }
+
+        // Zeigt eine Rückmeldung zur ausgewählten Aufgabe
+        function auftragMelden(titel) {
+            alert("Auftrag: " + titel +
+                  "\n\nDie Verwaltungsfunktion wird später mit der Datenbank verbunden.");
+        }
+
+        // Entfernt eine Auftragskarte aus der aktuellen Ansicht
+        function auftragEntfernen(button) {
+            const bestaetigung = confirm(
+                "Möchtest du diesen Auftrag wirklich aus der Ansicht entfernen?"
+            );
+
+            if (bestaetigung) {
+                button.closest(".auftrag").remove();
+            }
+        }
+    </script>
+
+</body>
+</html>
