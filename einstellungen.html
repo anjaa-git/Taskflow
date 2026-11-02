@@ -1,0 +1,1269 @@
+
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Einstellungen – Taskflow</title>
+
+    <style>
+
+        /* =========================================
+           1. GRUNDEINSTELLUNGEN
+        ========================================= */
+
+        * {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --hintergrund: #F6EFE5;
+            --weiss: #FFFCF6;
+            --braun: #583A2B;
+            --dunkel: #2A201B;
+            --rost: #B95F3C;
+            --hellbraun: #F0DFCF;
+            --grau: #88776B;
+            --linie: #E7D9C9;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--hintergrund);
+            color: var(--dunkel);
+        }
+
+
+        /* =========================================
+           2. KOPFZEILE
+        ========================================= */
+
+        header {
+            height: 72px;
+            background: var(--weiss);
+            border-bottom: 1px solid var(--linie);
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            padding: 0 30px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            color: var(--braun);
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        /* Chatblasen-Logo */
+        .logo-icon {
+            position: relative;
+            width: 34px;
+            height: 30px;
+        }
+
+        .blase {
+            position: absolute;
+            width: 23px;
+            height: 17px;
+            border-radius: 7px;
+        }
+
+        .blase.eins {
+            background: var(--rost);
+            top: 0;
+            left: 0;
+        }
+
+        .blase.zwei {
+            background: var(--braun);
+            bottom: 0;
+            right: 0;
+            border: 2px solid var(--weiss);
+        }
+
+        .kopf-rechts {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .suche-kopf {
+            width: 210px;
+            padding: 10px 14px;
+            border: 1px solid var(--linie);
+            border-radius: 20px;
+            background: var(--weiss);
+        }
+
+        .benachrichtigung {
+            border: none;
+            background: transparent;
+            color: var(--braun);
+            font-size: 21px;
+            cursor: pointer;
+        }
+
+        .anmelden {
+            background: var(--braun);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 11px 18px;
+            cursor: pointer;
+        }
+
+
+        /* =========================================
+           3. SEITENAUFTEILUNG
+        ========================================= */
+
+        .layout {
+            display: flex;
+            min-height: calc(100vh - 72px);
+        }
+
+
+        /* =========================================
+           4. LINKE NAVIGATIONSLEISTE
+        ========================================= */
+
+        nav {
+            width: 220px;
+            flex-shrink: 0;
+
+            background: var(--weiss);
+            border-right: 1px solid var(--linie);
+
+            padding: 25px 14px;
+        }
+
+        nav a {
+            display: block;
+            padding: 13px 15px;
+            margin-bottom: 7px;
+
+            color: var(--braun);
+            text-decoration: none;
+            border-radius: 12px;
+
+            transition: background 0.2s;
+        }
+
+        nav a:hover,
+        nav a.aktiv {
+            background: var(--hellbraun);
+        }
+
+        nav a.aktiv {
+            font-weight: bold;
+        }
+
+
+        /* =========================================
+           5. HAUPTBEREICH
+        ========================================= */
+
+        main {
+            flex: 1;
+            min-width: 0;
+            padding: 30px;
+        }
+
+        .seitenkopf {
+            margin-bottom: 25px;
+        }
+
+        .seitenkopf h1 {
+            margin: 0 0 8px;
+            font-size: 28px;
+        }
+
+        .seitenkopf p {
+            margin: 0;
+            color: var(--grau);
+        }
+
+
+        /* =========================================
+           6. EINSTELLUNGSKARTEN
+        ========================================= */
+
+        .einstellungen-raster {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 20px;
+            align-items: start;
+        }
+
+        .einstellung-karte {
+            background: var(--weiss);
+            border: 1px solid var(--linie);
+            border-radius: 18px;
+            padding: 24px;
+        }
+
+        .einstellung-karte h2 {
+            color: var(--braun);
+            font-size: 19px;
+            margin: 0 0 8px;
+        }
+
+        .karten-beschreibung {
+            color: var(--grau);
+            font-size: 13px;
+            line-height: 1.5;
+            margin: 0 0 20px;
+        }
+
+
+        /* =========================================
+           7. EINZELNE EINSTELLUNGEN
+        ========================================= */
+
+        .einstellung-zeile {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+
+            padding: 15px 0;
+            border-top: 1px solid #F0E6DB;
+        }
+
+        .einstellung-text {
+            flex: 1;
+        }
+
+        .einstellung-text strong {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .einstellung-text small {
+            color: var(--grau);
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+
+        /* =========================================
+           8. EIN- UND AUSSCHALTER
+        ========================================= */
+
+        .schalter {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 27px;
+            flex-shrink: 0;
+        }
+
+        /* Checkbox selbst unsichtbar */
+        .schalter input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        /* Sichtbarer Schalter */
+        .schalter-anzeige {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+
+            background: #D8C6B5;
+            border-radius: 20px;
+
+            transition: 0.25s;
+        }
+
+        /* Beweglicher Kreis */
+        .schalter-anzeige::before {
+            content: "";
+            position: absolute;
+
+            height: 19px;
+            width: 19px;
+            left: 4px;
+            bottom: 4px;
+
+            background: white;
+            border-radius: 50%;
+
+            transition: 0.25s;
+        }
+
+        /* Aktivierter Schalter */
+        .schalter input:checked + .schalter-anzeige {
+            background: var(--rost);
+        }
+
+        .schalter input:checked + .schalter-anzeige::before {
+            transform: translateX(21px);
+        }
+
+        .schalter input:focus-visible + .schalter-anzeige {
+            outline: 2px solid var(--braun);
+            outline-offset: 3px;
+        }
+
+
+        /* =========================================
+           9. AUSWAHLFELDER
+        ========================================= */
+
+        select,
+        input[type="number"] {
+            padding: 10px 12px;
+            border: 1px solid var(--linie);
+            border-radius: 10px;
+            background: var(--weiss);
+            color: var(--dunkel);
+            font-size: 14px;
+            max-width: 180px;
+        }
+
+        select:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: var(--rost);
+        }
+
+        .auswahl-bereich {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+
+        /* =========================================
+           10. SPEICHERBEREICH
+        ========================================= */
+
+        .speicherbereich {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            flex-wrap: wrap;
+
+            margin-top: 22px;
+            padding: 20px 24px;
+
+            background: var(--weiss);
+            border: 1px solid var(--linie);
+            border-radius: 16px;
+        }
+
+        .speicherbereich p {
+            color: var(--grau);
+            margin: 0;
+            font-size: 13px;
+        }
+
+        .speicher-aktionen {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+
+        /* =========================================
+           11. SCHALTFLÄCHEN
+        ========================================= */
+
+        button {
+            font-family: inherit;
+        }
+
+        .primaer {
+            background: var(--rost);
+            color: white;
+            border: none;
+            border-radius: 11px;
+            padding: 12px 18px;
+            cursor: pointer;
+        }
+
+        .primaer:hover {
+            background: #96482D;
+        }
+
+        .sekundaer {
+            background: var(--hellbraun);
+            color: var(--braun);
+            border: none;
+            border-radius: 11px;
+            padding: 12px 18px;
+            cursor: pointer;
+        }
+
+        .sekundaer:hover {
+            background: #E4CDB8;
+        }
+
+        .statusmeldung {
+            display: none;
+            color: var(--braun);
+            background: var(--hellbraun);
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+
+        /* =========================================
+           12. RESPONSIVES DESIGN
+        ========================================= */
+
+        @media (max-width: 900px) {
+
+            .einstellungen-raster {
+                grid-template-columns: 1fr;
+            }
+
+            nav {
+                width: 180px;
+            }
+
+            .suche-kopf {
+                display: none;
+            }
+        }
+
+        @media (max-width: 650px) {
+
+            .layout {
+                flex-direction: column;
+            }
+
+            nav {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--linie);
+                padding: 10px;
+            }
+
+            nav a {
+                display: inline-block;
+                margin-bottom: 0;
+            }
+
+            main {
+                padding: 18px 14px;
+            }
+
+            header {
+                padding: 0 15px;
+            }
+
+            .einstellung-zeile {
+                align-items: flex-start;
+            }
+
+            .speicherbereich {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+        }
+
+    </style>
+</head>
+
+
+<body>
+
+
+    <!-- =========================================
+         KOPFZEILE
+    ========================================= -->
+
+    <header>
+
+        <div class="logo">
+
+            <div class="logo-icon">
+                <div class="blase eins"></div>
+                <div class="blase zwei"></div>
+            </div>
+
+            Taskflow
+
+        </div>
+
+        <div class="kopf-rechts">
+
+            <input
+                class="suche-kopf"
+                type="text"
+                placeholder="Personen suchen..."
+            >
+
+            <button class="benachrichtigung"
+                    title="Benachrichtigungen">
+                ♧
+            </button>
+
+            <button class="anmelden">
+                Anmelden
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <!-- =========================================
+         SEITENAUFTEILUNG
+    ========================================= -->
+
+    <div class="layout">
+
+
+        <!-- =====================================
+             LINKE NAVIGATION
+        ===================================== -->
+
+        <nav>
+
+            <a href="index.html">Startseite</a>
+
+            <a href="aufgaben.html">Aufträge suchen</a>
+
+            <a href="auftrag-erstellen.html">Neuen Auftrag erstellen</a>
+
+            <a href="meine-auftraege.html">Meine Aufträge</a>
+
+            <a href="nachrichten.html">Nachrichten</a>
+
+            <a href="profil.html">Mein Profil</a>
+
+            <a href="einstellungen.html" class="aktiv">
+                Einstellungen
+            </a>
+
+        </nav>
+
+
+        <!-- =====================================
+             HAUPTBEREICH
+        ===================================== -->
+
+        <main>
+
+
+            <!-- Seitenüberschrift -->
+            <div class="seitenkopf">
+
+                <h1>Einstellungen</h1>
+
+                <p>
+                    Passe Taskflow an deine persönlichen Bedürfnisse an.
+                </p>
+
+            </div>
+
+
+            <!-- =================================
+                 EINSTELLUNGSBEREICHE
+            ================================= -->
+
+            <div class="einstellungen-raster">
+
+
+                <!-- =================================
+                     1. BENACHRICHTIGUNGEN
+                ================================= -->
+
+                <section class="einstellung-karte">
+
+                    <h2>Benachrichtigungen</h2>
+
+                    <p class="karten-beschreibung">
+                        Entscheide, über welche Ereignisse du informiert
+                        werden möchtest.
+                    </p>
+
+
+                    <!-- Allgemeine Benachrichtigungen -->
+                    <div class="einstellung-zeile">
+
+                        <div class="einstellung-text">
+
+                            <strong>Push-Benachrichtigungen</strong>
+
+                            <small>
+                                Hinweise zu neuen Nachrichten und Aufträgen.
+                            </small>
+
+                        </div>
+
+                        <label class="schalter">
+
+                            <input
+                                type="checkbox"
+                                id="push"
+                                checked
+                            >
+
+                            <span class="schalter-anzeige"></span>
+
+                        </label>
+
+                    </div>
+
+
+                    <!-- Nachrichten -->
+                    <div class="einstellung-zeile">
+
+                        <div class="einstellung-text">
+
+                            <strong>Neue Nachrichten</strong>
+
+                            <small>
+                                Informiere mich, wenn mir jemand schreibt.
+                            </small>
+
+                        </div>
+
+                        <label class="schalter">
+
+                            <input
+                                type="checkbox"
+                                id="nachrichten"
+                                checked
+                            >
+
+                            <span class="schalter-anzeige"></span>
+
+                        </label>
+
+                    </div>
+
+
+                    <!-- Auftragsmeldungen -->
+                    <div class="einstellung-zeile">
+
+                        <div class="einstellung-text">
+
+                            <strong>Auftragsmeldungen</strong>
+
+                            <small>
+                                Informationen zu angenommenen und
+                                abgeschlossenen Aufträgen.
+                            </small>
+
+                        </div>
+
+                        <label class="schalter">
+
+                            <input
+                                type="checkbox"
+                                id="auftraege"
+                                checked
+                            >
+
+                            <span class="schalter-anzeige"></span>
+
+                        </label>
+
+                    </div>
+
+
+                    <!-- E-Mail -->
+                    <div class="einstellung-zeile">
+
+                        <div class="einstellung-text">
+
+                            <strong>E-Mail-Benachrichtigungen</strong>
+
+                            <small>
+                                Erhalte wichtige Informationen per E-Mail.
+                            </small>
+
+                        </div>
+
+                        <label class="schalter">
+
+                            <input
+                                type="checkbox"
+                                id="email"
+                            >
+
+                            <span class="schalter-anzeige"></span>
+
+                        </label>
+
+                    </div>
+
+                </section>
+
+
+
+                <!-- =================================
+                     2. DATENSCHUTZ
+                ================================= -->
+
+                <section class="einstellung-karte">
+
+                    <h2>Datenschutz</h2>
+
+                    <p class="karten-beschreibung">
+                        Bestimme, welche Informationen andere Nutzer
+                        sehen können.
+                    </p>
+
+
+                    <!-- Profil sichtbar -->
+                    <div class="einstellung-zeile">
+
+                        <div class="einstellung-text">
+
+                            <strong>Profil sichtbar</strong>
+
+                            <small>
+                                Andere Nutzer können dein Profil finden.
+                            </small>
+
+                        </div>
+
+                        <label class="schalter">
+
+                            <input
+                                type="checkbox"
+                                id="profilSichtbar"
+                                checked
+                            >
+
+                            <span class="schalter-anzeige"></span>
+
+                        </label>
+
+                    </div>
+
+
+                    <!-- Verfügbarkeit anzeigen -->
+                    <div class="einstellung-zeile">
+
+                        <div class="einstellung-text">
+
+                            <strong>Verfügbarkeit anzeigen</strong>
+
+                            <small>
+                                Andere Nutzer sehen deine verfügbaren Zeiten.
+                            </small>
+
+                        </div>
+
+                        <label class="schalter">
+
+                            <input
+                                type="checkbox"
+                                id="verfuegbarkeit"
+                                checked
+                            >
+
+                            <span class="schalter-anzeige"></span>
+
+                        </label>
+
+                    </div>
+
+
+                    <!-- Standort -->
+                    <div class="einstellung-zeile">
+
+                        <div class="einstellung-text">
+
+                            <strong>Standort freigeben</strong>
+
+                            <small>
+                                Erlaube die Nutzung deines Standorts
+                                für die lokale Auftragssuche.
+                            </small>
+
+                        </div>
+
+                        <label class="schalter">
+
+                            <input
+                                type="checkbox"
+                                id="standort"
+                            >
+
+                            <span class="schalter-anzeige"></span>
+
+                        </label>
+
+                    </div>
+
+                </section>
+
+
+
+                <!-- =================================
+                     3. SUCHRADIUS
+                ================================= -->
+
+                <section class="einstellung-karte">
+
+                    <h2>Standort und Suchradius</h2>
+
+                    <p class="karten-beschreibung">
+                        Lege fest, in welchem Umkreis du nach Aufträgen
+                        und Helfern suchen möchtest.
+                    </p>
+
+
+                    <div class="einstellung-zeile">
+
+                        <div class="einstellung-text">
+
+                            <strong>Suchradius</strong>
+
+                            <small>
+                                Maximale Entfernung zu einem Auftrag.
+                            </small>
+
+                        </div>
+
+                        <div class="auswahl-bereich">
+
+                            <select id="radius">
+
+                                <option value="2">2 km</option>
+
+                                <option value="5" selected>5 km</option>
+
+                                <option value="10">10 km</option>
+
+                                <option value="15">15 km</option>
+
+                                <option value="25">25 km</option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="einstellung-zeile">
+
+                        <div class="einstellung-text">
+
+                            <strong>Standortgenauigkeit</strong>
+
+                            <small>
+                                Öffentliche Anzeige nur ungefährer
+                                Standorte.
+                            </small>
+
+                        </div>
+
+                        <span class="verfuegbar">
+                            Ungefähr
+                        </span>
+
+                    </div>
+
+                </section>
+
+
+
+                <!-- =================================
+                     4. SPRACHE UND DARSTELLUNG
+                ================================= -->
+
+                <section class="einstellung-karte">
+
+                    <h2>Sprache und Darstellung</h2>
+
+                    <p class="karten-beschreibung">
+                        Passe die Benutzeroberfläche an deine
+                        persönlichen Vorlieben an.
+                    </p>
+
+
+                    <!-- Sprache -->
+                    <div class="einstellung-zeile">
+
+                        <div class="einstellung-text">
+
+                            <strong>Sprache</strong>
+
+                            <small>
+                                Sprache der Benutzeroberfläche.
+                            </small>
+
+                        </div>
+
+                        <select id="sprache">
+
+                            <option value="de">Deutsch</option>
+
+                            <option value="en">English</option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- Darstellung -->
+                    <div class="einstellung-zeile">
+
+                        <div class="einstellung-text">
+
+                            <strong>Darstellung</strong>
+
+                            <small>
+                                Helle oder dunkle Benutzeroberfläche.
+                            </small>
+
+                        </div>
+
+                        <select id="darstellung">
+
+                            <option value="hell">Hell</option>
+
+                            <option value="dunkel">Dunkel</option>
+
+                        </select>
+
+                    </div>
+
+                </section>
+
+
+            </div>
+
+
+
+            <!-- =================================
+                 SPEICHERBEREICH
+            ================================= -->
+
+            <div class="speicherbereich">
+
+                <p>
+                    Deine Einstellungen werden lokal in diesem Browser gespeichert.
+                </p>
+
+                <div class="speicher-aktionen">
+
+                    <button
+                        class="sekundaer"
+                        onclick="einstellungenZuruecksetzen()"
+                    >
+                        Zurücksetzen
+                    </button>
+
+                    <button
+                        class="primaer"
+                        onclick="einstellungenSpeichern()"
+                    >
+                        Einstellungen speichern
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- Rückmeldung nach dem Speichern -->
+            <div class="statusmeldung" id="statusmeldung">
+                Deine Einstellungen wurden gespeichert.
+            </div>
+
+
+        </main>
+
+    </div>
+
+
+
+    <!-- =========================================
+         JAVASCRIPT
+    ========================================= -->
+
+    <script>
+
+
+        /* =========================================
+           1. EINSTELLUNGEN AUSLESEN
+        ========================================= */
+
+        function einstellungenAuslesen() {
+
+            // Alle Schalter und Auswahlfelder auslesen
+            const einstellungen = {
+
+                push: document.getElementById("push").checked,
+
+                nachrichten:
+                    document.getElementById("nachrichten").checked,
+
+                auftraege:
+                    document.getElementById("auftraege").checked,
+
+                email:
+                    document.getElementById("email").checked,
+
+                profilSichtbar:
+                    document.getElementById("profilSichtbar").checked,
+
+                verfuegbarkeit:
+                    document.getElementById("verfuegbarkeit").checked,
+
+                standort:
+                    document.getElementById("standort").checked,
+
+                radius:
+                    document.getElementById("radius").value,
+
+                sprache:
+                    document.getElementById("sprache").value,
+
+                darstellung:
+                    document.getElementById("darstellung").value
+
+            };
+
+            return einstellungen;
+
+        }
+
+
+
+        /* =========================================
+           2. EINSTELLUNGEN SPEICHERN
+        ========================================= */
+
+        function einstellungenSpeichern() {
+
+            // Alle aktuellen Einstellungen sammeln
+            const einstellungen = einstellungenAuslesen();
+
+            // In einen JSON-Text umwandeln und im Browser speichern
+            localStorage.setItem(
+                "taskflowEinstellungen",
+                JSON.stringify(einstellungen)
+            );
+
+            // Bestätigung anzeigen
+            const meldung =
+                document.getElementById("statusmeldung");
+
+            meldung.style.display = "block";
+
+            // Meldung nach kurzer Zeit wieder ausblenden
+            setTimeout(function() {
+
+                meldung.style.display = "none";
+
+            }, 3000);
+
+        }
+
+
+
+        /* =========================================
+           3. GESPEICHERTE EINSTELLUNGEN LADEN
+        ========================================= */
+
+        function einstellungenLaden() {
+
+            // Gespeicherte Daten abrufen
+            const daten = localStorage.getItem(
+                "taskflowEinstellungen"
+            );
+
+            // Wenn noch keine Daten vorhanden sind,
+            // bleiben die Standardeinstellungen bestehen.
+            if (!daten) {
+
+                return;
+
+            }
+
+            // JSON-Text in ein Objekt umwandeln
+            const einstellungen = JSON.parse(daten);
+
+
+            // Gespeicherte Schalter wiederherstellen
+            document.getElementById("push").checked =
+                einstellungen.push;
+
+            document.getElementById("nachrichten").checked =
+                einstellungen.nachrichten;
+
+            document.getElementById("auftraege").checked =
+                einstellungen.auftraege;
+
+            document.getElementById("email").checked =
+                einstellungen.email;
+
+            document.getElementById("profilSichtbar").checked =
+                einstellungen.profilSichtbar;
+
+            document.getElementById("verfuegbarkeit").checked =
+                einstellungen.verfuegbarkeit;
+
+            document.getElementById("standort").checked =
+                einstellungen.standort;
+
+
+            // Auswahlfelder wiederherstellen
+            document.getElementById("radius").value =
+                einstellungen.radius;
+
+            document.getElementById("sprache").value =
+                einstellungen.sprache;
+
+            document.getElementById("darstellung").value =
+                einstellungen.darstellung;
+
+            // Darstellung anwenden
+            darstellungAnwenden(einstellungen.darstellung);
+
+        }
+
+
+
+        /* =========================================
+           4. EINSTELLUNGEN ZURÜCKSETZEN
+        ========================================= */
+
+        function einstellungenZuruecksetzen() {
+
+            // Sicherheitsabfrage
+            const bestaetigung = confirm(
+                "Möchtest du wirklich alle Einstellungen zurücksetzen?"
+            );
+
+            if (!bestaetigung) {
+
+                return;
+
+            }
+
+            // Gespeicherte Einstellungen entfernen
+            localStorage.removeItem("taskflowEinstellungen");
+
+            // Standardwerte wiederherstellen
+            document.getElementById("push").checked = true;
+
+            document.getElementById("nachrichten").checked = true;
+
+            document.getElementById("auftraege").checked = true;
+
+            document.getElementById("email").checked = false;
+
+            document.getElementById("profilSichtbar").checked = true;
+
+            document.getElementById("verfuegbarkeit").checked = true;
+
+            document.getElementById("standort").checked = false;
+
+            document.getElementById("radius").value = "5";
+
+            document.getElementById("sprache").value = "de";
+
+            document.getElementById("darstellung").value = "hell";
+
+            // Helle Darstellung wieder aktivieren
+            darstellungAnwenden("hell");
+
+            alert("Die Einstellungen wurden zurückgesetzt.");
+
+        }
+
+
+
+        /* =========================================
+           5. DARSTELLUNG ANWENDEN
+        ========================================= */
+
+        function darstellungAnwenden(darstellung) {
+
+            // Die dunkle Darstellung wird über eine CSS-Klasse aktiviert.
+            if (darstellung === "dunkel") {
+
+                document.body.style.background = "#29221E";
+
+                document.body.style.color = "#F6EFE5";
+
+                document.querySelectorAll(
+                    ".einstellung-karte, .speicherbereich, header, nav"
+                ).forEach(function(element) {
+
+                    element.style.background = "#3A302A";
+
+                    element.style.color = "#F6EFE5";
+
+                });
+
+            } else {
+
+                // Zurück zur normalen Taskflow-Farbpalette
+                document.body.style.background = "#F6EFE5";
+
+                document.body.style.color = "#2A201B";
+
+                document.querySelectorAll(
+                    ".einstellung-karte, .speicherbereich, header, nav"
+                ).forEach(function(element) {
+
+                    element.style.background = "#FFFCF6";
+
+                    element.style.color = "#2A201B";
+
+                });
+
+            }
+
+        }
+
+
+
+        /* =========================================
+           6. DARSTELLUNG DIREKT BEIM ÄNDERN
+        ========================================= */
+
+        document.getElementById("darstellung").addEventListener(
+            "change",
+            function() {
+
+                // Neue Auswahl sofort übernehmen
+                darstellungAnwenden(this.value);
+
+            }
+        );
+
+
+
+        /* =========================================
+           7. BEIM ÖFFNEN DER SEITE
+        ========================================= */
+
+        // Gespeicherte Einstellungen automatisch laden
+        einstellungenLaden();
+
+
+    </script>
+
+</body>
+
+</html>
