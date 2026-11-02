@@ -1,0 +1,1172 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Nachrichten – Taskflow</title>
+
+    <style>
+
+        /* =========================================
+           1. GRUNDEINSTELLUNGEN UND FARBEN
+        ========================================= */
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #F6EFE5;
+            color: #2A201B;
+        }
+
+        /* Einheitliche Farben für das Taskflow-Design */
+        :root {
+            --hintergrund: #F6EFE5;
+            --weiss: #FFFCF6;
+            --braun: #583A2B;
+            --dunkel: #2A201B;
+            --rost: #B95F3C;
+            --hellbraun: #F0DFCF;
+            --grau: #88776B;
+            --linie: #E7D9C9;
+        }
+
+
+        /* =========================================
+           2. KOPFZEILE
+        ========================================= */
+
+        header {
+            height: 72px;
+            background: var(--weiss);
+            border-bottom: 1px solid var(--linie);
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            padding: 0 30px;
+        }
+
+        /* Logo und Name */
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--braun);
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        /* Zwei Chatblasen als Logo */
+        .logo-icon {
+            position: relative;
+            width: 34px;
+            height: 30px;
+        }
+
+        .blase {
+            position: absolute;
+            width: 23px;
+            height: 17px;
+            border-radius: 7px;
+        }
+
+        .blase.eins {
+            background: var(--rost);
+            top: 0;
+            left: 0;
+        }
+
+        .blase.zwei {
+            background: var(--braun);
+            bottom: 0;
+            right: 0;
+            border: 2px solid var(--weiss);
+        }
+
+        /* Rechte Seite der Kopfzeile */
+        .kopf-rechts {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .suchfeld-kopf {
+            border: 1px solid var(--linie);
+            border-radius: 20px;
+            padding: 10px 15px;
+            width: 210px;
+            background: var(--weiss);
+        }
+
+        .benachrichtigung {
+            border: none;
+            background: transparent;
+            color: var(--braun);
+            font-size: 21px;
+            cursor: pointer;
+        }
+
+        .anmelden {
+            background: var(--braun);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 11px 18px;
+            cursor: pointer;
+        }
+
+
+        /* =========================================
+           3. GRUNDLEGENDE SEITENAUFTEILUNG
+        ========================================= */
+
+        .layout {
+            display: flex;
+            min-height: calc(100vh - 72px);
+        }
+
+
+        /* =========================================
+           4. LINKE NAVIGATIONSLEISTE
+        ========================================= */
+
+        nav {
+            width: 220px;
+            flex-shrink: 0;
+
+            background: var(--weiss);
+            border-right: 1px solid var(--linie);
+
+            padding: 25px 14px;
+        }
+
+        nav a {
+            display: block;
+            text-decoration: none;
+            color: var(--braun);
+
+            padding: 13px 15px;
+            margin-bottom: 7px;
+
+            border-radius: 12px;
+            transition: background 0.2s;
+        }
+
+        nav a:hover {
+            background: var(--hellbraun);
+        }
+
+        nav a.aktiv {
+            background: var(--hellbraun);
+            font-weight: bold;
+        }
+
+
+        /* =========================================
+           5. HAUPTBEREICH
+        ========================================= */
+
+        main {
+            flex: 1;
+            min-width: 0;
+            padding: 25px 30px;
+        }
+
+        .seitenkopf {
+            margin-bottom: 22px;
+        }
+
+        .seitenkopf h1 {
+            margin: 0 0 7px;
+            font-size: 28px;
+            color: var(--dunkel);
+        }
+
+        .seitenkopf p {
+            margin: 0;
+            color: var(--grau);
+        }
+
+
+        /* =========================================
+           6. CHAT-OBERFLÄCHE
+        ========================================= */
+
+        .chat-bereich {
+            display: grid;
+
+            /* Links Kontakte, rechts Nachrichten */
+            grid-template-columns: 300px minmax(0, 1fr);
+
+            height: 650px;
+            max-height: calc(100vh - 180px);
+
+            background: var(--weiss);
+            border: 1px solid var(--linie);
+            border-radius: 18px;
+            overflow: hidden;
+        }
+
+
+        /* =========================================
+           7. KONTAKTLISTE
+        ========================================= */
+
+        .kontakte {
+            border-right: 1px solid var(--linie);
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .kontakte-kopf {
+            padding: 20px;
+            border-bottom: 1px solid var(--linie);
+        }
+
+        .kontakte-kopf h2 {
+            font-size: 19px;
+            margin: 0 0 15px;
+            color: var(--braun);
+        }
+
+        /* Suche innerhalb der Kontaktliste */
+        .kontakt-suche {
+            width: 100%;
+            padding: 11px 13px;
+            border: 1px solid var(--linie);
+            border-radius: 10px;
+            background: var(--weiss);
+            font-size: 14px;
+        }
+
+        /* Einzelner Kontakt */
+        .kontakt {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+
+            padding: 17px 18px;
+            cursor: pointer;
+
+            border-bottom: 1px solid #F2E9DF;
+            transition: background 0.2s;
+        }
+
+        .kontakt:hover {
+            background: #FAF3EB;
+        }
+
+        .kontakt.aktiv {
+            background: var(--hellbraun);
+        }
+
+        /* Runde Profilbilder mit Initialen */
+        .profilbild {
+            width: 43px;
+            height: 43px;
+            min-width: 43px;
+
+            border-radius: 50%;
+            background: #DDB99D;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            color: var(--braun);
+            font-weight: bold;
+            font-size: 15px;
+        }
+
+        .profilbild.dunkel {
+            background: #C6A28B;
+        }
+
+        .profilbild.hell {
+            background: #E9D4BF;
+        }
+
+        /* Name und Nachrichten-Vorschau */
+        .kontakt-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .kontakt-name {
+            font-weight: bold;
+            color: var(--dunkel);
+            margin-bottom: 5px;
+        }
+
+        .kontakt-vorschau {
+            color: var(--grau);
+            font-size: 13px;
+
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .kontakt-zeit {
+            color: var(--grau);
+            font-size: 11px;
+            align-self: flex-start;
+        }
+
+        /* Kontaktliste scrollbar machen */
+        .kontakt-liste {
+            overflow-y: auto;
+            flex: 1;
+        }
+
+
+        /* =========================================
+           8. CHATFENSTER
+        ========================================= */
+
+        .chat {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            min-height: 0;
+        }
+
+        /* Kopfbereich des Chats */
+        .chat-kopf {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+
+            padding: 16px 22px;
+            border-bottom: 1px solid var(--linie);
+        }
+
+        .chat-kopf-info {
+            flex: 1;
+        }
+
+        .chat-kopf-info h3 {
+            margin: 0 0 5px;
+            color: var(--braun);
+        }
+
+        .online-status {
+            color: #88776B;
+            font-size: 12px;
+        }
+
+        .auftragsinfo {
+            background: var(--hellbraun);
+            color: var(--braun);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 13px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+
+        /* =========================================
+           9. NACHRICHTENVERLAUF
+        ========================================= */
+
+        .nachrichten {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+
+            padding: 25px;
+
+            display: flex;
+            flex-direction: column;
+            gap: 17px;
+        }
+
+        /* Datum zwischen Nachrichten */
+        .datum {
+            text-align: center;
+            color: var(--grau);
+            font-size: 12px;
+            margin: 5px 0;
+        }
+
+        /* Eine einzelne Nachricht */
+        .nachricht {
+            display: flex;
+            flex-direction: column;
+            max-width: 75%;
+            align-self: flex-start;
+        }
+
+        /* Eigene Nachrichten rechts anzeigen */
+        .nachricht.eigen {
+            align-self: flex-end;
+        }
+
+        .nachricht-text {
+            padding: 13px 16px;
+            border-radius: 15px;
+
+            background: #F0E6DB;
+            line-height: 1.5;
+            overflow-wrap: anywhere;
+        }
+
+        .nachricht.eigen .nachricht-text {
+            background: var(--braun);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .nachricht:not(.eigen) .nachricht-text {
+            border-bottom-left-radius: 4px;
+        }
+
+        .nachricht-zeit {
+            color: var(--grau);
+            font-size: 11px;
+            margin-top: 5px;
+        }
+
+        .nachricht.eigen .nachricht-zeit {
+            text-align: right;
+        }
+
+
+        /* =========================================
+           10. EINGABEBEREICH
+        ========================================= */
+
+        .eingabe-bereich {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            padding: 17px 20px;
+            border-top: 1px solid var(--linie);
+        }
+
+        .nachricht-eingabe {
+            flex: 1;
+            min-width: 0;
+
+            padding: 13px 15px;
+            border: 1px solid var(--linie);
+            border-radius: 12px;
+
+            font-size: 14px;
+            outline: none;
+            background: var(--weiss);
+        }
+
+        .nachricht-eingabe:focus {
+            border-color: var(--rost);
+        }
+
+        .senden {
+            background: var(--rost);
+            color: white;
+
+            border: none;
+            border-radius: 12px;
+
+            padding: 13px 19px;
+            cursor: pointer;
+        }
+
+        .senden:hover {
+            background: #96482D;
+        }
+
+        /* Fehlermeldung */
+        .fehler {
+            color: var(--rost);
+            font-size: 12px;
+            padding: 0 20px 10px;
+            display: none;
+        }
+
+
+        /* =========================================
+           11. RESPONSIVES DESIGN
+        ========================================= */
+
+        @media (max-width: 900px) {
+
+            .chat-bereich {
+                grid-template-columns: 240px minmax(0, 1fr);
+            }
+
+            .suchfeld-kopf {
+                display: none;
+            }
+
+            nav {
+                width: 180px;
+            }
+        }
+
+        @media (max-width: 650px) {
+
+            .layout {
+                flex-direction: column;
+            }
+
+            nav {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--linie);
+                padding: 10px;
+            }
+
+            nav a {
+                display: inline-block;
+                margin-bottom: 0;
+            }
+
+            main {
+                padding: 15px;
+            }
+
+            .chat-bereich {
+                grid-template-columns: 1fr;
+                height: 650px;
+                max-height: none;
+            }
+
+            /* Auf kleinen Bildschirmen wird die Kontaktliste
+               ausgeblendet, sobald ein Chat geöffnet ist. */
+            .kontakte {
+                display: none;
+            }
+
+            .nachricht {
+                max-width: 90%;
+            }
+
+            .auftragsinfo {
+                display: none;
+            }
+
+            header {
+                padding: 0 15px;
+            }
+        }
+
+    </style>
+</head>
+
+
+<body>
+
+    <!-- =========================================
+         KOPFZEILE
+    ========================================= -->
+
+    <header>
+
+        <div class="logo">
+
+            <!-- Chatblasen-Logo -->
+            <div class="logo-icon">
+                <div class="blase eins"></div>
+                <div class="blase zwei"></div>
+            </div>
+
+            Taskflow
+
+        </div>
+
+        <div class="kopf-rechts">
+
+            <input
+                class="suchfeld-kopf"
+                type="text"
+                placeholder="Personen suchen..."
+            >
+
+            <button class="benachrichtigung" title="Benachrichtigungen">
+                ♧
+            </button>
+
+            <button class="anmelden">
+                Anmelden
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <!-- =========================================
+         SEITENAUFTEILUNG
+    ========================================= -->
+
+    <div class="layout">
+
+
+        <!-- =====================================
+             LINKE NAVIGATION
+        ===================================== -->
+
+        <nav>
+
+            <a href="index.html">Startseite</a>
+
+            <a href="aufgaben.html">Aufträge suchen</a>
+
+            <a href="auftrag-erstellen.html">Neuen Auftrag erstellen</a>
+
+            <a href="meine-auftraege.html">Meine Aufträge</a>
+
+            <a href="nachrichten.html" class="aktiv">Nachrichten</a>
+
+            <a href="profil.html">Mein Profil</a>
+
+        </nav>
+
+
+        <!-- =====================================
+             HAUPTBEREICH
+        ===================================== -->
+
+        <main>
+
+            <div class="seitenkopf">
+
+                <h1>Nachrichten</h1>
+
+                <p>
+                    Tausche dich mit Auftraggebern und Helfern aus.
+                </p>
+
+            </div>
+
+
+            <!-- =================================
+                 CHAT-BEREICH
+            ================================= -->
+
+            <div class="chat-bereich">
+
+
+                <!-- =================================
+                     KONTAKTLISTE
+                ================================= -->
+
+                <section class="kontakte">
+
+                    <div class="kontakte-kopf">
+
+                        <h2>Deine Chats</h2>
+
+                        <input
+                            type="text"
+                            class="kontakt-suche"
+                            id="kontaktSuche"
+                            placeholder="Kontakt suchen..."
+                            oninput="kontakteFiltern()"
+                        >
+
+                    </div>
+
+
+                    <!-- Liste aller Kontakte -->
+                    <div class="kontakt-liste" id="kontaktListe">
+
+
+                        <!-- Kontakt 1 -->
+                        <div
+                            class="kontakt aktiv"
+                            onclick="chatWechseln(
+                                'Lisa Müller',
+                                'LM',
+                                'Online',
+                                'lisa'
+                            )"
+                            data-name="Lisa Müller"
+                        >
+
+                            <div class="profilbild">
+                                LM
+                            </div>
+
+                            <div class="kontakt-info">
+
+                                <div class="kontakt-name">
+                                    Lisa Müller
+                                </div>
+
+                                <div class="kontakt-vorschau">
+                                    Wann hättest du Zeit?
+                                </div>
+
+                            </div>
+
+                            <div class="kontakt-zeit">
+                                14:20
+                            </div>
+
+                        </div>
+
+
+                        <!-- Kontakt 2 -->
+                        <div
+                            class="kontakt"
+                            onclick="chatWechseln(
+                                'Max Schneider',
+                                'MS',
+                                'Zuletzt aktiv',
+                                'max'
+                            )"
+                            data-name="Max Schneider"
+                        >
+
+                            <div class="profilbild dunkel">
+                                MS
+                            </div>
+
+                            <div class="kontakt-info">
+
+                                <div class="kontakt-name">
+                                    Max Schneider
+                                </div>
+
+                                <div class="kontakt-vorschau">
+                                    Vielen Dank für deine Hilfe!
+                                </div>
+
+                            </div>
+
+                            <div class="kontakt-zeit">
+                                Gestern
+                            </div>
+
+                        </div>
+
+
+                        <!-- Kontakt 3 -->
+                        <div
+                            class="kontakt"
+                            onclick="chatWechseln(
+                                'Anna Weber',
+                                'AW',
+                                'Online',
+                                'anna'
+                            )"
+                            data-name="Anna Weber"
+                        >
+
+                            <div class="profilbild hell">
+                                AW
+                            </div>
+
+                            <div class="kontakt-info">
+
+                                <div class="kontakt-name">
+                                    Anna Weber
+                                </div>
+
+                                <div class="kontakt-vorschau">
+                                    Das passt für mich!
+                                </div>
+
+                            </div>
+
+                            <div class="kontakt-zeit">
+                                Mo.
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+
+                <!-- =================================
+                     CHATFENSTER
+                ================================= -->
+
+                <section class="chat">
+
+
+                    <!-- Name des Gesprächspartners -->
+                    <div class="chat-kopf">
+
+                        <div class="profilbild" id="chatProfilbild">
+                            LM
+                        </div>
+
+                        <div class="chat-kopf-info">
+
+                            <h3 id="chatName">
+                                Lisa Müller
+                            </h3>
+
+                            <span class="online-status" id="chatStatus">
+                                Online
+                            </span>
+
+                        </div>
+
+                        <button
+                            class="auftragsinfo"
+                            onclick="alert('Auftragsinformationen werden später mit dem Auftragssystem verbunden.')"
+                        >
+                            Auftragsdetails
+                        </button>
+
+                    </div>
+
+
+
+                    <!-- Nachrichtenverlauf -->
+                    <div class="nachrichten" id="nachrichten">
+
+
+                        <div class="datum">
+                            Heute
+                        </div>
+
+
+                        <!-- Nachricht des Kontakts -->
+                        <div class="nachricht">
+
+                            <div class="nachricht-text">
+                                Hallo! Ich habe gesehen, dass du Hilfe
+                                beim Einkaufen angeboten hast.
+                            </div>
+
+                            <div class="nachricht-zeit">
+                                14:12
+                            </div>
+
+                        </div>
+
+
+                        <!-- Eigene Nachricht -->
+                        <div class="nachricht eigen">
+
+                            <div class="nachricht-text">
+                                Hallo Lisa! Ja, ich könnte dir dabei helfen.
+                            </div>
+
+                            <div class="nachricht-zeit">
+                                14:15
+                            </div>
+
+                        </div>
+
+
+                        <!-- Weitere Nachricht -->
+                        <div class="nachricht">
+
+                            <div class="nachricht-text">
+                                Super! Wann hättest du denn Zeit?
+                            </div>
+
+                            <div class="nachricht-zeit">
+                                14:20
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <!-- Fehlermeldung bei leerer Eingabe -->
+                    <div class="fehler" id="fehler">
+                        Bitte gib zuerst eine Nachricht ein.
+                    </div>
+
+
+                    <!-- Eingabefeld und Senden-Schaltfläche -->
+                    <div class="eingabe-bereich">
+
+                        <input
+                            type="text"
+                            class="nachricht-eingabe"
+                            id="nachrichtEingabe"
+                            placeholder="Schreibe eine Nachricht..."
+                            onkeydown="tasteDruecken(event)"
+                        >
+
+                        <button
+                            class="senden"
+                            onclick="nachrichtSenden()"
+                        >
+                            Senden
+                        </button>
+
+                    </div>
+
+                </section>
+
+            </div>
+
+        </main>
+
+    </div>
+
+
+
+    <!-- =========================================
+         JAVASCRIPT
+    ========================================= -->
+
+    <script>
+
+
+        /* =========================================
+           1. KONTAKTE FILTERN
+        ========================================= */
+
+        function kontakteFiltern() {
+
+            // Eingegebenen Suchbegriff auslesen
+            const suchbegriff = document
+                .getElementById("kontaktSuche")
+                .value
+                .toLowerCase();
+
+            // Alle Kontakte auswählen
+            const kontakte = document.querySelectorAll(".kontakt");
+
+            // Jeden Kontakt überprüfen
+            kontakte.forEach(function(kontakt) {
+
+                const name = kontakt.dataset.name.toLowerCase();
+
+                // Nur passende Kontakte anzeigen
+                if (name.includes(suchbegriff)) {
+
+                    kontakt.style.display = "flex";
+
+                } else {
+
+                    kontakt.style.display = "none";
+
+                }
+
+            });
+
+        }
+
+
+
+        /* =========================================
+           2. CHAT WECHSELN
+        ========================================= */
+
+        function chatWechseln(name, kuerzel, status, id) {
+
+            // Namen und Profilbild oben im Chat aktualisieren
+            document.getElementById("chatName").innerText = name;
+
+            document.getElementById("chatProfilbild").innerText = kuerzel;
+
+            document.getElementById("chatStatus").innerText = status;
+
+            // Alle Kontakte optisch zurücksetzen
+            document.querySelectorAll(".kontakt").forEach(function(kontakt) {
+
+                kontakt.classList.remove("aktiv");
+
+            });
+
+            // Ausgewählten Kontakt hervorheben
+            event.currentTarget.classList.add("aktiv");
+
+            // Beispiel-Nachrichten für den ausgewählten Chat laden
+            const nachrichten = document.getElementById("nachrichten");
+
+            if (id === "lisa") {
+
+                nachrichten.innerHTML = `
+                    <div class="datum">Heute</div>
+
+                    <div class="nachricht">
+                        <div class="nachricht-text">
+                            Hallo! Ich habe gesehen, dass du Hilfe
+                            beim Einkaufen angeboten hast.
+                        </div>
+                        <div class="nachricht-zeit">14:12</div>
+                    </div>
+
+                    <div class="nachricht eigen">
+                        <div class="nachricht-text">
+                            Hallo Lisa! Ja, ich könnte dir dabei helfen.
+                        </div>
+                        <div class="nachricht-zeit">14:15</div>
+                    </div>
+
+                    <div class="nachricht">
+                        <div class="nachricht-text">
+                            Super! Wann hättest du denn Zeit?
+                        </div>
+                        <div class="nachricht-zeit">14:20</div>
+                    </div>
+                `;
+
+            } else if (id === "max") {
+
+                nachrichten.innerHTML = `
+                    <div class="datum">Gestern</div>
+
+                    <div class="nachricht">
+                        <div class="nachricht-text">
+                            Vielen Dank für deine Hilfe!
+                        </div>
+                        <div class="nachricht-zeit">16:30</div>
+                    </div>
+
+                    <div class="nachricht eigen">
+                        <div class="nachricht-text">
+                            Gerne, hat alles gut geklappt.
+                        </div>
+                        <div class="nachricht-zeit">16:35</div>
+                    </div>
+                `;
+
+            } else if (id === "anna") {
+
+                nachrichten.innerHTML = `
+                    <div class="datum">Montag</div>
+
+                    <div class="nachricht eigen">
+                        <div class="nachricht-text">
+                            Würde dir der Termin am Nachmittag passen?
+                        </div>
+                        <div class="nachricht-zeit">11:05</div>
+                    </div>
+
+                    <div class="nachricht">
+                        <div class="nachricht-text">
+                            Das passt für mich!
+                        </div>
+                        <div class="nachricht-zeit">11:12</div>
+                    </div>
+                `;
+
+            }
+
+            // Nachrichtenbereich zum Ende scrollen
+            nachrichten.scrollTop = nachrichten.scrollHeight;
+
+        }
+
+
+
+        /* =========================================
+           3. NACHRICHT SENDEN
+        ========================================= */
+
+        function nachrichtSenden() {
+
+            // Eingabefeld und Nachrichtenbereich auswählen
+            const eingabe = document.getElementById("nachrichtEingabe");
+
+            const nachrichten = document.getElementById("nachrichten");
+
+            const fehler = document.getElementById("fehler");
+
+            // Text auslesen und Leerzeichen entfernen
+            const text = eingabe.value.trim();
+
+            // Prüfen, ob eine Nachricht eingegeben wurde
+            if (text === "") {
+
+                fehler.style.display = "block";
+
+                return;
+
+            }
+
+            // Fehlermeldung ausblenden
+            fehler.style.display = "none";
+
+
+            // Neue Nachrichtenkarte erstellen
+            const neueNachricht = document.createElement("div");
+
+            neueNachricht.classList.add("nachricht", "eigen");
+
+
+            // Textbereich der Nachricht erstellen
+            const nachrichtenText = document.createElement("div");
+
+            nachrichtenText.classList.add("nachricht-text");
+
+            // textContent verhindert, dass eingegebener Text
+            // als HTML oder JavaScript interpretiert wird.
+            nachrichtenText.textContent = text;
+
+
+            // Aktuelle Uhrzeit ermitteln
+            const jetzt = new Date();
+
+            const uhrzeit = jetzt.toLocaleTimeString("de-DE", {
+                hour: "2-digit",
+                minute: "2-digit"
+            });
+
+
+            // Uhrzeit unter der Nachricht anzeigen
+            const zeit = document.createElement("div");
+
+            zeit.classList.add("nachricht-zeit");
+
+            zeit.textContent = uhrzeit;
+
+
+            // Nachricht zusammensetzen
+            neueNachricht.appendChild(nachrichtenText);
+
+            neueNachricht.appendChild(zeit);
+
+
+            // Nachricht in den Chat einfügen
+            nachrichten.appendChild(neueNachricht);
+
+
+            // Eingabefeld leeren
+            eingabe.value = "";
+
+
+            // Automatisch zur neuesten Nachricht scrollen
+            nachrichten.scrollTop = nachrichten.scrollHeight;
+
+        }
+
+
+
+        /* =========================================
+           4. NACHRICHT MIT ENTER SENDEN
+        ========================================= */
+
+        function tasteDruecken(event) {
+
+            // Prüfen, ob die Enter-Taste gedrückt wurde
+            if (event.key === "Enter") {
+
+                nachrichtSenden();
+
+            }
+
+        }
+
+    </script>
+
+</body>
+</html>
